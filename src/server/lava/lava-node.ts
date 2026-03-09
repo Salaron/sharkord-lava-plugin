@@ -1,3 +1,4 @@
+import { logDebug, logError } from '../server';
 import { LavaPlayer } from './lava-player';
 import { LavaRestClient, type LoadTracksResponse } from './lava-rest-client';
 import type { TLavaNodeOptions } from './types';
@@ -95,16 +96,17 @@ class LavaNode {
       const event: WebSocketEvent = JSON.parse(messageJson);
 
       switch (event.op) {
-        case WebSocketOp.READY: {
+        case WebSocketOp.READY:
           const readyEvent = event as WebSocketReadyEvent;
           this.sessionId = readyEvent.sessionId;
           break;
-        }
 
-        default: {
-        }
+        default:
+          logDebug('WebSocket unhandled message', event);
       }
-    } catch (err) {}
+    } catch (err) {
+      logError('WebSocket message handle error', err);
+    }
   }
 }
 

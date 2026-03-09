@@ -1,9 +1,9 @@
 import type {
   PlainTransport,
-  PluginContext,
   Producer,
   TExternalStreamHandle
 } from '@sharkord/plugin-sdk';
+import type { LavaPluginContext } from '../server';
 
 class VoiceConnection {
   public static rtpPacketType = 111;
@@ -23,7 +23,10 @@ class VoiceConnection {
     return VoiceConnection.connections.get(voiceChannelId);
   }
 
-  public static async create(context: PluginContext, voiceChannelId: number) {
+  public static async create(
+    context: LavaPluginContext,
+    voiceChannelId: number
+  ) {
     const voiceConnection = new VoiceConnection(voiceChannelId);
     await voiceConnection.open(context);
     VoiceConnection.connections.set(voiceChannelId, voiceConnection);
@@ -40,16 +43,16 @@ class VoiceConnection {
     }
   }
 
-  private async open(context: PluginContext) {
+  private async open(context: LavaPluginContext) {
     const router = context.actions.voice.getRouter(this.voiceChannelId);
 
     this.transport = await router.createPlainTransport({
       listenInfo: {
         ip: '0.0.0.0',
-        announcedAddress: 'host.docker.internal',
+        announcedAddress: context.settings.announcedAddress(),
         portRange: {
-          min: 20000,
-          max: 20000
+          min: context.settings.rtpMinPort(),
+          max: context.settings.rtpMaxPort()
         },
         protocol: 'udp'
       },

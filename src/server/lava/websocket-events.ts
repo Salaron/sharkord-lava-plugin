@@ -7,6 +7,7 @@ export interface WebSocketEvent {
 }
 
 export interface WebSocketReadyEvent extends WebSocketEvent {
+  op: WebSocketOp.READY;
   resumed: boolean;
   sessionId: string;
 }

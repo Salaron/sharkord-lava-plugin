@@ -1,6 +1,6 @@
 import type { CommandDefinition, TInvokerContext } from '@sharkord/plugin-sdk';
 import { LoadType, type Track } from '../lava/lava-rest-client';
-import type { LavaPluginContext } from '..';
+import type { LavaPluginContext } from '../server';
 import { VoiceConnection } from '../voice/voice-connection';
 
 type PlayCommandArgs = {
@@ -14,7 +14,11 @@ const execute = async (
 ) => {
   const voiceChannelId = invoker.currentVoiceChannelId;
   if (!voiceChannelId)
-    throw new Error('You must be in a voice channel to use this command.');
+    return 'You must be in a voice channel to use this command.';
+
+  if (!context.lavaNode.isConnected) {
+    await context.lavaNode.connect();
+  }
 
   const searchResult = await context.lavaNode.search(args.query);
 
@@ -49,8 +53,13 @@ const execute = async (
   }
   player.attachToVoiceConnection(voiceConnection);
 
-  player.queue.enqueue(tracks);
+  player.queue.push(...tracks);
   await player.play();
+
+  voiceConnection.stream?.update({
+    title: player.currentTrack?.info.title ?? "Unknown track",
+    avatarUrl: player.currentTrack?.info.artworkUrl
+  });
 };
 
 const registerPlayCommand = (context: LavaPluginContext) => {
@@ -65,7 +74,14 @@ const registerPlayCommand = (context: LavaPluginContext) => {
         required: true
       }
     ],
-    executes: (invoker, args) => execute(context, invoker, args)
+    executes: async (invoker, args) => {
+      try {
+        await execute(context, invoker, args);
+      } catch (err) {
+        context.error(err);
+        throw err;
+      }
+    }
   };
 
   context.commands.register(playCommand);

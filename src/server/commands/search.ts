@@ -1,5 +1,5 @@
 import type { CommandDefinition, TInvokerContext } from '@sharkord/plugin-sdk';
-import type { LavaPluginContext } from '..';
+import type { LavaPluginContext } from '../server';
 
 type SearchCommandArgs = {
   query: string;
@@ -25,7 +25,14 @@ const registerSearchCommand = (context: LavaPluginContext) => {
         required: true
       }
     ],
-    executes: (invoker, args) => execute(context, invoker, args)
+    executes: async (invoker, args) => {
+      try {
+        await execute(context, invoker, args);
+      } catch (err) {
+        context.error(err);
+        throw err;
+      }
+    }
   });
 };
 

@@ -63,8 +63,6 @@ export interface ErrorResult {
   };
 }
 
-export interface UpdatePlayerRequest {}
-
 export type LoadTracksResponse =
   | TrackResult
   | PlaylistResult

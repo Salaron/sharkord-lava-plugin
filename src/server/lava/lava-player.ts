@@ -1,11 +1,10 @@
-import { TrackQueue } from '../playback/track-queue';
 import { VoiceConnection } from '../voice/voice-connection';
 import type { LavaNode } from './lava-node';
 import type { LavaRestClient, Track } from './lava-rest-client';
 import type { TRtpOptions } from './types';
 
 class LavaPlayer {
-  public queue = new TrackQueue();
+  public queue: Track[] = [];
   public currentTrack: Track | undefined;
 
   private node: LavaNode;
@@ -37,7 +36,7 @@ class LavaPlayer {
 
   public async play() {
     if (!this.currentTrack) {
-      this.currentTrack = this.queue.dequeue();
+      this.currentTrack = this.queue.shift();
     }
 
     if (this.currentTrack) {
@@ -50,8 +49,8 @@ class LavaPlayer {
     }
   }
 
-  public async skip() {
-    this.currentTrack = this.queue.dequeue();
+  public async next() {
+    this.currentTrack = this.queue.shift();
 
     await this.play();
   }

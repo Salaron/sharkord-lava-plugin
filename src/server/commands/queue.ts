@@ -1,5 +1,5 @@
 import type { TInvokerContext } from '@sharkord/plugin-sdk';
-import type { LavaPluginContext } from '..';
+import type { LavaPluginContext } from '../server';
 
 const execute = async (
   context: LavaPluginContext,
@@ -8,17 +8,16 @@ const execute = async (
 ) => {
   const voiceChannelId = invoker.currentVoiceChannelId;
   if (!voiceChannelId)
-    throw new Error('You must be in a voice channel to use this command.');
+    return 'You must be in a voice channel to use this command.';
 
   const player = context.lavaNode.getPlayer(voiceChannelId);
-  if (!player || !player.queue.peak()) {
+  if (!player || player.queue.length === 0) {
     return 'There is no tracks in queue';
   }
 
-  const tracks = player.queue.items();
-  let message = `Total tracks: ${tracks.length}\n\n`;
+  let message = `Total tracks: ${player.queue.length}\n\n`;
 
-  for (const track of tracks) {
+  for (const track of player.queue) {
     message += `${track.info.title} - ${track.info.author}\n`;
   }
 
@@ -30,7 +29,14 @@ const registerQueueCommand = (context: LavaPluginContext) => {
     name: 'queue',
     description: 'Show tracks in queue.',
     args: [],
-    executes: (invoker, args) => execute(context, invoker, args)
+    executes: async (invoker, args) => {
+      try {
+        await execute(context, invoker, args);
+      } catch (err) {
+        context.error(err);
+        throw err;
+      }
+    }
   });
 };
 
