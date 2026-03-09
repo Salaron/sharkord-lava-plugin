@@ -1,7 +1,7 @@
 import { logDebug, logError } from '../server';
 import { LavaPlayer } from './lava-player';
-import { LavaRestClient, type LoadTracksResponse } from './lava-rest-client';
-import type { TLavaNodeOptions } from './types';
+import { LavaRestClient } from './lava-rest-client';
+import type { LoadTracksResponse, TLavaNodeOptions } from './types';
 import {
   WebSocketOp,
   type WebSocketEvent,

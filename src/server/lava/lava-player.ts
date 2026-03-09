@@ -1,7 +1,7 @@
 import { VoiceConnection } from '../voice/voice-connection';
 import type { LavaNode } from './lava-node';
-import type { LavaRestClient, Track } from './lava-rest-client';
-import type { TRtpOptions } from './types';
+import type { LavaRestClient } from './lava-rest-client';
+import type { Track, TRtpOptions } from './types';
 
 class LavaPlayer {
   public queue: Track[] = [];
