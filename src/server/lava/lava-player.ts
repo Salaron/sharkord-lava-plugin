@@ -35,7 +35,7 @@ class LavaPlayer {
     };
   }
 
-  public async play() {
+  public async play(replace: boolean = false) {
     if (!this.currentTrack) {
       this.currentTrack = this.queue.shift();
     }
@@ -46,6 +46,7 @@ class LavaPlayer {
         this.voiceChannelId,
         this.currentTrack.encoded,
         this.volume,
+        replace,
         this.rtpParams
       );
     }
@@ -54,7 +55,7 @@ class LavaPlayer {
   public async next() {
     this.currentTrack = this.queue.shift();
 
-    await this.play();
+    await this.play(true);
   }
 
   public async destroy() {

@@ -38,6 +38,7 @@ class LavaRestClient {
     voiceChannelId: number,
     encodedTrack: string,
     volume: number,
+    replace: boolean,
     rtp?: TRtpOptions
   ) {
     await this.sendRequest(
@@ -45,7 +46,7 @@ class LavaRestClient {
       `/v4/sessions/${sessionId}/players/${voiceChannelId}`,
       {
         queryParams: {
-          noReplace: 'true'
+          noReplace: (!replace).toString()
         },
         body: {
           track: {
