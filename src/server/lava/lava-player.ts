@@ -31,7 +31,7 @@ class LavaPlayer {
       host: voiceConnection.transport.tuple.localIp,
       port: voiceConnection.transport.tuple.localPort,
       ssrc: voiceConnection.rtpSsrc,
-      payloadType: VoiceConnection.rtpPacketType
+      payloadType: voiceConnection.rtpPacketType
     };
   }
 

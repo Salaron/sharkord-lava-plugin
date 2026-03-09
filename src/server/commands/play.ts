@@ -36,8 +36,7 @@ const execute = async (
     case LoadType.EMPTY:
       return 'No results found.';
     case LoadType.ERROR:
-      context.error(searchResult.data);
-      return `An error occured during search: ${searchResult.data.message}`;
+      throw new Error(`An error occured: ${searchResult.data.message}`);
   }
 
   context.debug(`Found ${tracks.length} results for query '${args.query}'`);
@@ -58,7 +57,7 @@ const execute = async (
   await player.play();
 
   voiceConnection.stream?.update({
-    title: player.currentTrack?.info.title ?? "Unknown track",
+    title: player.currentTrack?.info.title ?? 'Unknown track',
     avatarUrl: player.currentTrack?.info.artworkUrl
   });
 };

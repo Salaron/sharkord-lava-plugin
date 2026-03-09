@@ -12,7 +12,7 @@ const execute = async (
 
   const player = context.lavaNode.getPlayer(voiceChannelId);
   if (!player || player.queue.length === 0) {
-    return 'There is no tracks in queue';
+    return 'Queue is empty.';
   }
 
   await player.next();
@@ -21,7 +21,7 @@ const execute = async (
 const registerSkipCommand = (context: LavaPluginContext) => {
   context.commands.register({
     name: 'skip',
-    description: 'Skip current playing track.',
+    description: 'Skip the currently playing track.',
     args: [],
     executes: async (invoker, args) => {
       try {

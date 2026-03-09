@@ -14,7 +14,7 @@ const execute = async (
   try {
     await context.lavaNode.destroyPlayer(voiceChannelId);
   } catch (err) {
-    context.error('Failed to destroy player in Lavalink', err);
+    context.error('Failed to destroy Lavalink player', err);
   }
 
   VoiceConnection.remove(voiceChannelId);

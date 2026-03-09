@@ -12,13 +12,13 @@ const execute = async (
 
   const player = context.lavaNode.getPlayer(voiceChannelId);
   if (!player || player.queue.length === 0) {
-    return 'There is no tracks in queue';
+    return 'Queue is empty.';
   }
 
-  let message = `Total tracks: ${player.queue.length}\n\n`;
+  let message = `Tracks total: ${player.queue.length}\n\n`;
 
   for (const track of player.queue) {
-    message += `${track.info.title} - ${track.info.author}\n`;
+    message += `${track.info.title}\n`;
   }
 
   return message;
@@ -27,7 +27,7 @@ const execute = async (
 const registerQueueCommand = (context: LavaPluginContext) => {
   context.commands.register({
     name: 'queue',
-    description: 'Show tracks in queue.',
+    description: 'Show current queue.',
     args: [],
     executes: async (invoker, args) => {
       try {

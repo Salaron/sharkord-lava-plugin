@@ -6,7 +6,6 @@ import type {
 import type { LavaPluginContext } from '../server';
 
 class VoiceConnection {
-  public static rtpPacketType = 111;
   private static connections = new Map<number, VoiceConnection>();
 
   public voiceChannelId: number;
@@ -14,6 +13,7 @@ class VoiceConnection {
   public audioProducer: Producer | undefined;
   public stream: TExternalStreamHandle | undefined;
   public rtpSsrc = Math.floor(Math.random() * 1e9);
+  public rtpPacketType = 111;
 
   constructor(voiceChannelId: number) {
     this.voiceChannelId = voiceChannelId;
@@ -67,7 +67,7 @@ class VoiceConnection {
         codecs: [
           {
             mimeType: 'audio/opus',
-            payloadType: VoiceConnection.rtpPacketType,
+            payloadType: this.rtpPacketType,
             clockRate: 48000,
             channels: 2,
             parameters: {},
@@ -79,9 +79,9 @@ class VoiceConnection {
     });
 
     this.stream = context.actions.voice.createStream({
-      key: 'music',
+      key: `lavalink-${this.voiceChannelId}`,
       channelId: this.voiceChannelId,
-      title: 'Music',
+      title: 'Lavalink',
       producers: {
         audio: this.audioProducer
       }
