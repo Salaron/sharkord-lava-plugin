@@ -1,13 +1,17 @@
-import { type PluginContext } from '@sharkord/plugin-sdk';
+import {
+  type PluginContext,
+  type UnloadPluginContext
+} from '@sharkord/plugin-sdk';
 import { registerCommands } from './commands';
 import { LavaNode } from './lava/lava-node';
 
 export interface LavaPluginContext extends Omit<PluginContext, 'settings'> {
   lavaNode: LavaNode;
   settings: PluginContext['settings'] & {
-    rtpMinPort: () => number;
-    rtpMaxPort: () => number;
-    announcedAddress: () => string;
+    getRtpMinPort: () => number;
+    getRtpMaxPort: () => number;
+    getAnnouncedAddress: () => string;
+    getVolume: () => number;
   };
 }
 
@@ -15,8 +19,6 @@ let lavaNode: LavaNode | undefined;
 let pluginContext: LavaPluginContext | undefined;
 
 const onLoad = async (context: LavaPluginContext) => {
-  pluginContext = context;
-
   const host = process.env.LAVALINK_HOST ?? 'localhost';
   const port = process.env.LAVALINK_PORT ?? 2333;
   const password = process.env.LAVALINK_PASSWORD ?? 'youshallnotpass';
@@ -25,16 +27,16 @@ const onLoad = async (context: LavaPluginContext) => {
   context.log(`Connecting to Lavalink ${host}:${port}...`);
 
   try {
-    pluginContext.lavaNode = lavaNode = new LavaNode({
+    context.lavaNode = lavaNode = new LavaNode({
       host: host,
       port: +port,
       password: password,
       secure: secure
     });
-    await pluginContext.lavaNode.connect();
+    await context.lavaNode.connect();
 
     context.log('Connected to Lavalink.');
-    context.debug(`Session Id = ${pluginContext.lavaNode.sessionId}`);
+    context.debug(`Session Id = ${context.lavaNode.sessionId}`);
   } catch (err) {
     context.error('Failed to connect to Lavalink', err);
   }
@@ -43,39 +45,51 @@ const onLoad = async (context: LavaPluginContext) => {
     {
       key: 'rtp-min-port',
       name: 'RTP min port',
-      description: '',
+      description: 'Start of UDP port range for audio streaming.',
       type: 'number',
       defaultValue: 20000
     },
     {
       key: 'rtp-max-port',
       name: 'RTP max port',
-      description: '',
+      description: 'End of UDP port range for audio streaming.',
       type: 'number',
       defaultValue: 20010
     },
     {
       key: 'announced-address',
-      name: 'Public address',
+      name: 'Announced address',
       description:
-        'Public address of the server. Required if Lavalink hosted on different machine.',
+        'Address sent to Lavalink so it can stream audio to Sharkord. Use this if Lavalink is hosted on another machine or network.',
       type: 'string',
       defaultValue: '127.0.0.1'
+    },
+    {
+      key: 'volume',
+      name: 'Volume',
+      description: 'Default volume level (0-100).',
+      type: 'number',
+      defaultValue: 50
     }
   ]);
 
-  context.settings.rtpMaxPort = () =>
+  context.settings.getRtpMinPort = () =>
     settings.get('rtp-min-port') as unknown as number;
-  context.settings.rtpMaxPort = () =>
+  context.settings.getRtpMaxPort = () =>
     settings.get('rtp-max-port') as unknown as number;
-  context.settings.announcedAddress = () => settings.get('announced-address');
+  context.settings.getAnnouncedAddress = () =>
+    settings.get('announced-address');
+  context.settings.getVolume = () =>
+    settings.get('volume') as unknown as number;
 
-  registerCommands(pluginContext);
+  registerCommands(context);
+
+  pluginContext = context;
 
   context.log('Lavalink plugin loaded');
 };
 
-const onUnload = (context: PluginContext) => {
+const onUnload = (context: UnloadPluginContext) => {
   lavaNode?.disconnect();
 
   context.log('Lavalink plugin unloaded');

@@ -6,6 +6,7 @@ import type { TRtpOptions } from './types';
 class LavaPlayer {
   public queue: Track[] = [];
   public currentTrack: Track | undefined;
+  public volume: number = 100;
 
   private node: LavaNode;
   private restClient: LavaRestClient;

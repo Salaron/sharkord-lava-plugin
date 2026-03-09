@@ -49,10 +49,10 @@ class VoiceConnection {
     this.transport = await router.createPlainTransport({
       listenInfo: {
         ip: '0.0.0.0',
-        announcedAddress: context.settings.announcedAddress(),
+        announcedAddress: context.settings.getAnnouncedAddress(),
         portRange: {
-          min: context.settings.rtpMinPort(),
-          max: context.settings.rtpMaxPort()
+          min: context.settings.getRtpMinPort(),
+          max: context.settings.getRtpMaxPort()
         },
         protocol: 'udp'
       },

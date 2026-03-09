@@ -50,6 +50,7 @@ const execute = async (
   let player = context.lavaNode.getPlayer(voiceChannelId);
   if (!player) {
     player = context.lavaNode.createPlayer(voiceChannelId);
+    player.volume = Math.min(Math.max(context.settings.getVolume(), 100), 0);
   }
   player.attachToVoiceConnection(voiceConnection);
 
