@@ -2,19 +2,7 @@
   "name": "sharkord-lava-plugin",
   "version": "0.0.1",
   "module": "src/server.ts",
-  "devDependencies": {
-    "@types/bun": "latest",
-    "@types/react": "^19.2.14",
-    "@typescript-eslint/eslint-plugin": "^8.46.1",
-    "eslint": "^8.56.0",
-    "eslint-plugin-unused-imports": "^4.1.4",
-    "prettier": "^3.5.3",
-    "prettier-plugin-organize-imports": "^4.1.0"
-  },
-  "peerDependencies": {
-    "typescript": "^5",
-    "react": "^19"
-  },
+  "type": "module",
   "scripts": {
     "build": "bun build.ts",
     "build:dev": "bun run build && cp -r dist/* ../../apps/server/data/plugins/",
@@ -32,11 +20,23 @@
     },
     "author": "Salaron",
     "homepage": "https://github.com/Salaron/sharkord-lava-plugin",
-    "description": "Sharkord plugin for Lavastream.",
-    "logo": "https://github.com/lavalink-devs/Lavalink/raw/master/branding/lavalink.svg"
+    "description": "Sharkord plugin for Lavalink."
   },
-  "type": "module",
   "dependencies": {
-    "mediasoup": "^3.19.17"
+    "mediasoup": "^3.19.17",
+    "@sharkord/plugin-sdk": "*"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "@types/react": "^19.2.14",
+    "@typescript-eslint/eslint-plugin": "^8.46.1",
+    "eslint": "^8.56.0",
+    "eslint-plugin-unused-imports": "^4.1.4",
+    "prettier": "^3.5.3",
+    "prettier-plugin-organize-imports": "^4.1.0"
+  },
+  "peerDependencies": {
+    "typescript": "^5",
+    "react": "^19"
   }
 }
