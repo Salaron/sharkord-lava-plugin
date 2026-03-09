@@ -1,14 +1,14 @@
-import type { PluginSettings } from "@sharkord/plugin-sdk";
-import { registerPlayCommand } from "./play";
-import type { LavaPluginContext } from "../server";
-import { registerQueueCommand } from "./queue";
-import { registerSkipCommand } from "./skip";
-import { registerStopCommand } from "./stop";
-import { registerSearchCommand } from "./search";
+import type { PluginSettings } from '@sharkord/plugin-sdk';
+import type { LavaPluginContext } from '../server';
+import { registerPlayCommand } from './play';
+import { registerQueueCommand } from './queue';
+import { registerSearchCommand } from './search';
+import { registerSkipCommand } from './skip';
+import { registerStopCommand } from './stop';
 
 const registerCommands = (
   context: LavaPluginContext,
-  settings: PluginSettings,
+  settings: PluginSettings
 ) => {
   registerPlayCommand(context);
   registerStopCommand(context);

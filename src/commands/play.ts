@@ -1,10 +1,7 @@
-import type {
-  CommandDefinition,
-  TInvokerContext,
-} from "@sharkord/plugin-sdk";
-import { VoiceConnection } from "../voice/voice-connection";
-import type { LavaPluginContext } from "../server";
-import { LoadType, type Track } from "../lava/lava-rest-client";
+import type { CommandDefinition, TInvokerContext } from '@sharkord/plugin-sdk';
+import { LoadType, type Track } from '../lava/lava-rest-client';
+import type { LavaPluginContext } from '../server';
+import { VoiceConnection } from '../voice/voice-connection';
 
 type PlayCommandArgs = {
   query: string;
@@ -13,11 +10,11 @@ type PlayCommandArgs = {
 const execute = async (
   context: LavaPluginContext,
   invoker: TInvokerContext,
-  args: PlayCommandArgs,
+  args: PlayCommandArgs
 ) => {
   const voiceChannelId = invoker.currentVoiceChannelId;
   if (!voiceChannelId)
-    throw new Error("You must be in a voice channel to use this command.");
+    throw new Error('You must be in a voice channel to use this command.');
 
   const searchResult = await context.lavaNode.search(args.query);
 
@@ -33,7 +30,7 @@ const execute = async (
       tracks.push(searchResult.data);
       break;
     case LoadType.EMPTY:
-      return "No results found.";
+      return 'No results found.';
     case LoadType.ERROR:
       context.error(searchResult.data);
       return `An error occured during search: ${searchResult.data.message}`;
@@ -58,17 +55,17 @@ const execute = async (
 
 const registerPlayCommand = (context: LavaPluginContext) => {
   const playCommand: CommandDefinition<PlayCommandArgs> = {
-    name: "play",
-    description: "Add a track or playlist to queue from a URL or search term.",
+    name: 'play',
+    description: 'Add a track or playlist to queue from a URL or search term.',
     args: [
       {
-        name: "query",
-        description: "Playlist/track URL or search term.",
-        type: "string",
-        required: true,
-      },
+        name: 'query',
+        description: 'Playlist/track URL or search term.',
+        type: 'string',
+        required: true
+      }
     ],
-    executes: (invoker, args) => execute(context, invoker, args),
+    executes: (invoker, args) => execute(context, invoker, args)
   };
 
   context.commands.register(playCommand);

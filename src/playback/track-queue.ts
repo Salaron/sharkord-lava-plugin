@@ -1,4 +1,4 @@
-import type { Track } from "../lava/lava-rest-client";
+import type { Track } from '../lava/lava-rest-client';
 
 class TrackQueue {
   private queue: Track[] = [];

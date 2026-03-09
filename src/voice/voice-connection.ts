@@ -2,8 +2,8 @@ import type {
   PlainTransport,
   PluginContext,
   Producer,
-  TExternalStreamHandle,
-} from "@sharkord/plugin-sdk";
+  TExternalStreamHandle
+} from '@sharkord/plugin-sdk';
 
 class VoiceConnection {
   public static rtpPacketType = 111;
@@ -45,43 +45,43 @@ class VoiceConnection {
 
     this.transport = await router.createPlainTransport({
       listenInfo: {
-        ip: "0.0.0.0",
-        announcedAddress: "host.docker.internal",
+        ip: '0.0.0.0',
+        announcedAddress: 'host.docker.internal',
         portRange: {
           min: 20000,
-          max: 20000,
+          max: 20000
         },
-        protocol: "udp",
+        protocol: 'udp'
       },
       rtcpMux: true,
       comedia: true,
-      enableSrtp: false,
+      enableSrtp: false
     });
 
     this.audioProducer = await this.transport.produce({
-      kind: "audio",
+      kind: 'audio',
       rtpParameters: {
         codecs: [
           {
-            mimeType: "audio/opus",
+            mimeType: 'audio/opus',
             payloadType: VoiceConnection.rtpPacketType,
             clockRate: 48000,
             channels: 2,
             parameters: {},
-            rtcpFeedback: [],
-          },
+            rtcpFeedback: []
+          }
         ],
-        encodings: [{ ssrc: this.rtpSsrc }],
-      },
+        encodings: [{ ssrc: this.rtpSsrc }]
+      }
     });
 
     this.stream = context.actions.voice.createStream({
-      key: "music",
+      key: 'music',
       channelId: this.voiceChannelId,
-      title: "Music",
+      title: 'Music',
       producers: {
-        audio: this.audioProducer,
-      },
+        audio: this.audioProducer
+      }
     });
   }
 

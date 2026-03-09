@@ -1,5 +1,5 @@
 export enum WebSocketOp {
-  READY = "ready",
+  READY = 'ready'
 }
 
 export interface WebSocketEvent {

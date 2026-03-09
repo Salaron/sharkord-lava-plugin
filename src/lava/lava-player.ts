@@ -1,8 +1,8 @@
-import { TrackQueue } from "../playback/track-queue";
-import { VoiceConnection } from "../voice/voice-connection";
-import type { LavaNode } from "./lava-node";
-import type { LavaRestClient, Track } from "./lava-rest-client";
-import type { TRtpOptions } from "./types";
+import { TrackQueue } from '../playback/track-queue';
+import { VoiceConnection } from '../voice/voice-connection';
+import type { LavaNode } from './lava-node';
+import type { LavaRestClient, Track } from './lava-rest-client';
+import type { TRtpOptions } from './types';
 
 class LavaPlayer {
   public queue = new TrackQueue();
@@ -16,7 +16,7 @@ class LavaPlayer {
   constructor(
     lavaNode: LavaNode,
     restClient: LavaRestClient,
-    voiceChannelId: number,
+    voiceChannelId: number
   ) {
     this.node = lavaNode;
     this.restClient = restClient;
@@ -25,13 +25,13 @@ class LavaPlayer {
 
   public attachToVoiceConnection(voiceConnection: VoiceConnection) {
     if (!voiceConnection.transport)
-      throw new Error("Cannot attach player to closed voice connection");
+      throw new Error('Cannot attach player to closed voice connection');
 
     this.rtpParams = {
       host: voiceConnection.transport.tuple.localIp,
       port: voiceConnection.transport.tuple.localPort,
       ssrc: voiceConnection.rtpSsrc,
-      payloadType: VoiceConnection.rtpPacketType,
+      payloadType: VoiceConnection.rtpPacketType
     };
   }
 
@@ -45,7 +45,7 @@ class LavaPlayer {
         this.node.sessionId!,
         this.voiceChannelId,
         this.currentTrack.encoded,
-        this.rtpParams,
+        this.rtpParams
       );
     }
   }
@@ -59,7 +59,7 @@ class LavaPlayer {
   public async destroy() {
     await this.restClient.destroyPlayer(
       this.node.sessionId!,
-      this.voiceChannelId,
+      this.voiceChannelId
     );
   }
 }

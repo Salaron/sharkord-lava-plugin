@@ -1,5 +1,5 @@
-import type { CommandDefinition, TInvokerContext } from "@sharkord/plugin-sdk";
-import type { LavaPluginContext } from "../server";
+import type { CommandDefinition, TInvokerContext } from '@sharkord/plugin-sdk';
+import type { LavaPluginContext } from '../server';
 
 type SearchCommandArgs = {
   query: string;
@@ -8,24 +8,24 @@ type SearchCommandArgs = {
 const execute = async (
   context: LavaPluginContext,
   invoker: TInvokerContext,
-  args: SearchCommandArgs,
+  args: SearchCommandArgs
 ) => {
   const searchResult = context.lavaNode.search(args.query);
 };
 
 const registerSearchCommand = (context: LavaPluginContext) => {
   context.commands.register(<CommandDefinition<SearchCommandArgs>>{
-    name: "search",
-    description: "Search tracks.",
+    name: 'search',
+    description: 'Search tracks.',
     args: [
       {
-        name: "query",
-        description: "Playlist/track URL or search term.",
-        type: "string",
-        required: true,
-      },
+        name: 'query',
+        description: 'Playlist/track URL or search term.',
+        type: 'string',
+        required: true
+      }
     ],
-    executes: (invoker, args) => execute(context, invoker, args),
+    executes: (invoker, args) => execute(context, invoker, args)
   });
 };
 

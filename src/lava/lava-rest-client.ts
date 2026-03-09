@@ -1,11 +1,11 @@
-import type { TLavaNodeOptions, TRtpOptions } from "./types";
+import type { TLavaNodeOptions, TRtpOptions } from './types';
 
 export enum LoadType {
-  TRACK = "track",
-  PLAYLIST = "playlist",
-  SEARCH = "search",
-  EMPTY = "empty",
-  ERROR = "error",
+  TRACK = 'track',
+  PLAYLIST = 'playlist',
+  SEARCH = 'search',
+  EMPTY = 'empty',
+  ERROR = 'error'
 }
 
 export interface Track {
@@ -58,7 +58,7 @@ export interface ErrorResult {
   loadType: LoadType.ERROR;
   data: {
     message: string;
-    severity: "common" | "suspicious" | "fault";
+    severity: 'common' | 'suspicious' | 'fault';
     cause: string;
   };
 }
@@ -80,8 +80,8 @@ class LavaRestClient {
   }
 
   public async loadTracks(identifier: string): Promise<LoadTracksResponse> {
-    const response = await this.sendRequest("GET", "/v4/loadtracks", {
-      identifier,
+    const response = await this.sendRequest('GET', '/v4/loadtracks', {
+      identifier
     });
 
     const loadTracksResponse = (await response.json()) as LoadTracksResponse;
@@ -92,25 +92,25 @@ class LavaRestClient {
     sessionId: string,
     voiceChannelId: number,
     encodedTrack: string,
-    rtp?: TRtpOptions,
+    rtp?: TRtpOptions
   ) {
     await this.sendRequest(
-      "PATCH",
+      'PATCH',
       `/v4/sessions/${sessionId}/players/${voiceChannelId}`,
       {},
       {
         track: {
-          encoded: encodedTrack,
+          encoded: encodedTrack
         },
-        rtp,
-      },
+        rtp
+      }
     );
   }
 
   public async destroyPlayer(sessionId: string, voiceChannelId: number) {
     await this.sendRequest(
-      "DELETE",
-      `/v4/sessions/${sessionId}/players/${voiceChannelId}`,
+      'DELETE',
+      `/v4/sessions/${sessionId}/players/${voiceChannelId}`
     );
   }
 
@@ -118,10 +118,10 @@ class LavaRestClient {
     method: string,
     path: string,
     query?: Record<string, string>,
-    body?: any,
+    body?: any
   ): Promise<Response> {
     const url = new URL(
-      `${this.options.secure ? "https" : "http"}://${this.options.host}:${this.options.port}`,
+      `${this.options.secure ? 'https' : 'http'}://${this.options.host}:${this.options.port}`
     );
 
     url.pathname = path;
@@ -132,9 +132,9 @@ class LavaRestClient {
       body: JSON.stringify(body),
       headers: {
         Authorization: this.options.password,
-        "Client-Name": "Sharkord-Lava-Plugin/0.0.1",
-        "Content-Type": "application/json",
-      },
+        'Client-Name': 'Sharkord-Lava-Plugin/0.0.1',
+        'Content-Type': 'application/json'
+      }
     };
 
     const response = await fetch(url, opts);

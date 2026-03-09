@@ -11,4 +11,3 @@ export type TRtpOptions = {
   ssrc: number;
   payloadType: number;
 };
-

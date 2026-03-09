@@ -1,11 +1,11 @@
-import { LavaPlayer } from "./lava-player";
-import { LavaRestClient, type LoadTracksResponse } from "./lava-rest-client";
-import type { TLavaNodeOptions } from "./types";
+import { LavaPlayer } from './lava-player';
+import { LavaRestClient, type LoadTracksResponse } from './lava-rest-client';
+import type { TLavaNodeOptions } from './types';
 import {
   WebSocketOp,
   type WebSocketEvent,
-  type WebSocketReadyEvent,
-} from "./websocket-events";
+  type WebSocketReadyEvent
+} from './websocket-events';
 
 class LavaNode {
   public isConnected = false;
@@ -24,23 +24,23 @@ class LavaNode {
   public connect(): Promise<void> {
     if (this.isConnected) return Promise.resolve();
 
-    const url = `${this.options.secure ? "wss" : "ws"}://${this.options.host}:${this.options.port}/v4/websocket`;
+    const url = `${this.options.secure ? 'wss' : 'ws'}://${this.options.host}:${this.options.port}/v4/websocket`;
 
     return new Promise((resolve, reject) => {
       const websocket = new WebSocket(url, {
         headers: {
           Authorization: this.options.password,
-          "User-Id": "1",
-          "Client-Name": "Sharkord-Lava-Plugin/0.0.1",
-        },
+          'User-Id': '1',
+          'Client-Name': 'Sharkord-Lava-Plugin/0.0.1'
+        }
       });
 
       const onopen = () => {
         this.isConnected = true;
         this.websocket = websocket;
-        websocket.removeEventListener("close", onclose);
+        websocket.removeEventListener('close', onclose);
 
-        websocket.addEventListener("message", (ev) => {
+        websocket.addEventListener('message', (ev) => {
           this.handleMessage(ev.data);
           if (this.sessionId) resolve();
         });
@@ -49,12 +49,12 @@ class LavaNode {
       const onclose = () => {
         this.isConnected = false;
         this.websocket = undefined;
-        websocket.removeEventListener("open", onopen);
+        websocket.removeEventListener('open', onopen);
         reject();
       };
 
-      websocket.addEventListener("open", onopen);
-      websocket.addEventListener("close", onclose);
+      websocket.addEventListener('open', onopen);
+      websocket.addEventListener('close', onclose);
     });
   }
 
