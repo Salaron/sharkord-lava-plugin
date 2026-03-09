@@ -37,6 +37,7 @@ class LavaRestClient {
     sessionId: string,
     voiceChannelId: number,
     encodedTrack: string,
+    volume: number,
     rtp?: TRtpOptions
   ) {
     await this.sendRequest(
@@ -50,6 +51,7 @@ class LavaRestClient {
           track: {
             encoded: encodedTrack
           },
+          volume,
           rtp
         }
       }

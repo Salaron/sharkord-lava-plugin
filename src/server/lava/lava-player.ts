@@ -45,6 +45,7 @@ class LavaPlayer {
         this.node.sessionId!,
         this.voiceChannelId,
         this.currentTrack.encoded,
+        this.volume,
         this.rtpParams
       );
     }
