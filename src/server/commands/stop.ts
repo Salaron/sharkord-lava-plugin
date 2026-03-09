@@ -27,7 +27,7 @@ const registerStopCommand = (context: LavaPluginContext) => {
     args: [],
     executes: async (invoker, args) => {
       try {
-        await execute(context, invoker, args);
+        return await execute(context, invoker, args);
       } catch (err) {
         context.error(err);
         throw err;

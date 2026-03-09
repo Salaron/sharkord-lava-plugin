@@ -60,6 +60,11 @@ const execute = async (
     title: player.currentTrack?.info.title ?? 'Unknown track',
     avatarUrl: player.currentTrack?.info.artworkUrl
   });
+
+  if (player.queue.length === 0)
+    return `Playing: ${player.currentTrack?.info.title} - ${player.currentTrack?.info.author}`
+
+  return `Added ${tracks.length} tracks to queue.`
 };
 
 const registerPlayCommand = (context: LavaPluginContext) => {
@@ -76,7 +81,7 @@ const registerPlayCommand = (context: LavaPluginContext) => {
     ],
     executes: async (invoker, args) => {
       try {
-        await execute(context, invoker, args);
+        return await execute(context, invoker, args);
       } catch (err) {
         context.error(err);
         throw err;
