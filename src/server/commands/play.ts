@@ -1,5 +1,6 @@
 import type { CommandDefinition, TInvokerContext } from '@sharkord/plugin-sdk';
-import { LoadType, type Track } from '../lava/lava-rest-client';
+import { LoadType } from '../lava/lava-rest-client';
+import type { Track } from '../lava/types';
 import type { LavaPluginContext } from '../server';
 import { VoiceConnection } from '../voice/voice-connection';
 
@@ -62,9 +63,9 @@ const execute = async (
   });
 
   if (player.queue.length === 0)
-    return `Playing: ${player.currentTrack?.info.title} - ${player.currentTrack?.info.author}`
+    return `Playing: ${player.currentTrack?.info.author} — ${player.currentTrack?.info.title}`;
 
-  return `Added ${tracks.length} tracks to queue.`
+  return `Added ${tracks.length} tracks to queue.`;
 };
 
 const registerPlayCommand = (context: LavaPluginContext) => {

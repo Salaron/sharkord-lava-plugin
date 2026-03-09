@@ -1,6 +1,21 @@
 import type { TInvokerContext } from '@sharkord/plugin-sdk';
 import type { LavaPluginContext } from '../server';
 
+const formatTrackLength = (milliseconds: number) => {
+  const totalSeconds = Math.floor(milliseconds / 1000);
+
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+
+  let timeParts = [hours, minutes, seconds];
+  if (hours === 0) {
+    timeParts = [minutes, seconds];
+  }
+
+  return timeParts.map((v) => String(v).padStart(2, '0')).join(':');
+};
+
 const execute = async (
   context: LavaPluginContext,
   invoker: TInvokerContext,
@@ -15,10 +30,16 @@ const execute = async (
     return 'Queue is empty.';
   }
 
-  let message = `Tracks total: ${player.queue.length}\n\n`;
+  const queueLengthMs = player.queue.reduce(
+    (len, track) => (len += track.info.length),
+    0
+  );
+  let message = `Tracks total: ${player.queue.length} [${formatTrackLength(queueLengthMs)}]\n\n`;
 
+  let trackNumber = 1;
   for (const track of player.queue) {
-    message += `${track.info.title}\n`;
+    message += `${trackNumber}. ${track.info.title} [${formatTrackLength(track.info.length)}]\n`;
+    trackNumber += 1;
   }
 
   return message;

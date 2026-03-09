@@ -1,4 +1,8 @@
-import type { TLavaNodeOptions, TRtpOptions } from './types';
+import type {
+  LoadTracksResponse,
+  TLavaNodeOptions,
+  TRtpOptions
+} from './types';
 
 export enum LoadType {
   TRACK = 'track',
@@ -8,67 +12,10 @@ export enum LoadType {
   ERROR = 'error'
 }
 
-export interface Track {
-  encoded: string;
-  info: {
-    identifier: string;
-    isSeekable: boolean;
-    author: string;
-    length: number;
-    isStream: boolean;
-    position: number;
-    title: string;
-    uri?: string;
-    artworkUrl?: string;
-    isrc?: string;
-    sourceName: string;
-  };
-}
-
-export interface Playlist {
-  encoded: string;
-  info: {
-    name: string;
-    selectedTrack: number;
-  };
-  tracks: Track[];
-}
-
-export interface TrackResult {
-  loadType: LoadType.TRACK;
-  data: Track;
-}
-
-export interface PlaylistResult {
-  loadType: LoadType.PLAYLIST;
-  data: Playlist;
-}
-
-export interface SearchResult {
-  loadType: LoadType.SEARCH;
-  data: Track[];
-}
-
-export interface EmptyResult {
-  loadType: LoadType.EMPTY;
-  data: Record<string, never>;
-}
-
-export interface ErrorResult {
-  loadType: LoadType.ERROR;
-  data: {
-    message: string;
-    severity: 'common' | 'suspicious' | 'fault';
-    cause: string;
-  };
-}
-
-export type LoadTracksResponse =
-  | TrackResult
-  | PlaylistResult
-  | SearchResult
-  | EmptyResult
-  | ErrorResult;
+type TRequestOptions = {
+  queryParams?: Record<string, string>;
+  body?: unknown;
+};
 
 class LavaRestClient {
   private options: TLavaNodeOptions;
@@ -79,7 +26,7 @@ class LavaRestClient {
 
   public async loadTracks(identifier: string): Promise<LoadTracksResponse> {
     const response = await this.sendRequest('GET', '/v4/loadtracks', {
-      identifier
+      queryParams: { identifier }
     });
 
     const loadTracksResponse = (await response.json()) as LoadTracksResponse;
@@ -95,12 +42,16 @@ class LavaRestClient {
     await this.sendRequest(
       'PATCH',
       `/v4/sessions/${sessionId}/players/${voiceChannelId}`,
-      {},
       {
-        track: {
-          encoded: encodedTrack
+        queryParams: {
+          noReplace: 'true'
         },
-        rtp
+        body: {
+          track: {
+            encoded: encodedTrack
+          },
+          rtp
+        }
       }
     );
   }
@@ -115,19 +66,18 @@ class LavaRestClient {
   private async sendRequest(
     method: string,
     path: string,
-    query?: Record<string, string>,
-    body?: any
+    options?: TRequestOptions
   ): Promise<Response> {
     const url = new URL(
       `${this.options.secure ? 'https' : 'http'}://${this.options.host}:${this.options.port}`
     );
 
     url.pathname = path;
-    url.search = new URLSearchParams(query).toString();
+    url.search = new URLSearchParams(options?.queryParams).toString();
 
-    const opts: RequestInit = {
+    const request: RequestInit = {
       method,
-      body: JSON.stringify(body),
+      body: JSON.stringify(options?.body),
       headers: {
         Authorization: this.options.password,
         'Client-Name': 'Sharkord-Lava-Plugin/0.0.1',
@@ -135,7 +85,9 @@ class LavaRestClient {
       }
     };
 
-    const response = await fetch(url, opts);
+    if (options?.body) request.body = JSON.stringify(options.body);
+
+    const response = await fetch(url, request);
     return response;
   }
 }

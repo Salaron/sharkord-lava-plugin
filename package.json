@@ -23,8 +23,8 @@
     "description": "Play music in voice channels using Lavalink."
   },
   "dependencies": {
-    "mediasoup": "^3.19.17",
-    "@sharkord/plugin-sdk": "*"
+    "@sharkord/plugin-sdk": "*",
+    "mediasoup": "^3.19.17"
   },
   "devDependencies": {
     "@types/bun": "latest",
