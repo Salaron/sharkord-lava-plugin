@@ -1,5 +1,5 @@
 import type { CommandDefinition, TInvokerContext } from '@sharkord/plugin-sdk';
-import type { LavaPluginContext } from '../server';
+import type { LavaPluginContext } from '..';
 
 type SearchCommandArgs = {
   query: string;

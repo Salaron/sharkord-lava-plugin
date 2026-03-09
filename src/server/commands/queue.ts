@@ -1,5 +1,5 @@
 import type { TInvokerContext } from '@sharkord/plugin-sdk';
-import type { LavaPluginContext } from '../server';
+import type { LavaPluginContext } from '..';
 
 const execute = async (
   context: LavaPluginContext,
@@ -15,16 +15,23 @@ const execute = async (
     return 'There is no tracks in queue';
   }
 
-  await player.skip();
+  const tracks = player.queue.items();
+  let message = `Total tracks: ${tracks.length}\n\n`;
+
+  for (const track of tracks) {
+    message += `${track.info.title} - ${track.info.author}\n`;
+  }
+
+  return message;
 };
 
-const registerSkipCommand = (context: LavaPluginContext) => {
+const registerQueueCommand = (context: LavaPluginContext) => {
   context.commands.register({
-    name: 'skip',
-    description: 'Skip current playing track.',
+    name: 'queue',
+    description: 'Show tracks in queue.',
     args: [],
     executes: (invoker, args) => execute(context, invoker, args)
   });
 };
 
-export { registerSkipCommand };
+export { registerQueueCommand };

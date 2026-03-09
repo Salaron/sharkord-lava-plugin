@@ -1,6 +1,5 @@
 import type { TInvokerContext } from '@sharkord/plugin-sdk';
-import type { LavaPluginContext } from '../server';
-import { VoiceConnection } from '../voice/voice-connection';
+import type { LavaPluginContext } from '..';
 
 const execute = async (
   context: LavaPluginContext,
@@ -11,17 +10,21 @@ const execute = async (
   if (!voiceChannelId)
     throw new Error('You must be in a voice channel to use this command.');
 
-  VoiceConnection.remove(voiceChannelId);
-  await context.lavaNode.destroyPlayer(voiceChannelId);
+  const player = context.lavaNode.getPlayer(voiceChannelId);
+  if (!player || !player.queue.peak()) {
+    return 'There is no tracks in queue';
+  }
+
+  await player.skip();
 };
 
-const registerStopCommand = (context: LavaPluginContext) => {
+const registerSkipCommand = (context: LavaPluginContext) => {
   context.commands.register({
-    name: 'stop',
-    description: 'Stop music.',
+    name: 'skip',
+    description: 'Skip current playing track.',
     args: [],
     executes: (invoker, args) => execute(context, invoker, args)
   });
 };
 
-export { registerStopCommand };
+export { registerSkipCommand };

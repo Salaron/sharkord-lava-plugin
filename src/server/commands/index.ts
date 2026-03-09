@@ -1,5 +1,5 @@
 import type { PluginSettings } from '@sharkord/plugin-sdk';
-import type { LavaPluginContext } from '../server';
+import type { LavaPluginContext } from '..';
 import { registerPlayCommand } from './play';
 import { registerQueueCommand } from './queue';
 import { registerSearchCommand } from './search';

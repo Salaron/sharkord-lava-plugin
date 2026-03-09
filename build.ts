@@ -43,7 +43,7 @@ const clientGlobals: BunPlugin = {
 
 await Promise.all([
   Bun.build({
-    entrypoints: ['src/server.ts'],
+    entrypoints: ['src/server/index.ts'],
     outdir,
     target: 'bun',
     minify: true,
@@ -52,7 +52,7 @@ await Promise.all([
   }),
 
   Bun.build({
-    entrypoints: ['src/client.ts'],
+    entrypoints: ['src/client/index.ts'],
     outdir,
     target: 'browser',
     minify: true,

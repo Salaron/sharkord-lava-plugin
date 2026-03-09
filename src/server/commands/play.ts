@@ -1,6 +1,6 @@
 import type { CommandDefinition, TInvokerContext } from '@sharkord/plugin-sdk';
 import { LoadType, type Track } from '../lava/lava-rest-client';
-import type { LavaPluginContext } from '../server';
+import type { LavaPluginContext } from '..';
 import { VoiceConnection } from '../voice/voice-connection';
 
 type PlayCommandArgs = {
