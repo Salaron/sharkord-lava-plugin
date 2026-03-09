@@ -1,0 +1,67 @@
+import { TrackQueue } from "../playback/track-queue";
+import { VoiceConnection } from "../voice/voice-connection";
+import type { LavaNode } from "./lava-node";
+import type { LavaRestClient, Track } from "./lava-rest-client";
+import type { TRtpOptions } from "./types";
+
+class LavaPlayer {
+  public queue = new TrackQueue();
+  public currentTrack: Track | undefined;
+
+  private node: LavaNode;
+  private restClient: LavaRestClient;
+  private rtpParams: TRtpOptions | undefined;
+  private voiceChannelId: number;
+
+  constructor(
+    lavaNode: LavaNode,
+    restClient: LavaRestClient,
+    voiceChannelId: number,
+  ) {
+    this.node = lavaNode;
+    this.restClient = restClient;
+    this.voiceChannelId = voiceChannelId;
+  }
+
+  public attachToVoiceConnection(voiceConnection: VoiceConnection) {
+    if (!voiceConnection.transport)
+      throw new Error("Cannot attach player to closed voice connection");
+
+    this.rtpParams = {
+      host: voiceConnection.transport.tuple.localIp,
+      port: voiceConnection.transport.tuple.localPort,
+      ssrc: voiceConnection.rtpSsrc,
+      payloadType: VoiceConnection.rtpPacketType,
+    };
+  }
+
+  public async play() {
+    if (!this.currentTrack) {
+      this.currentTrack = this.queue.dequeue();
+    }
+
+    if (this.currentTrack) {
+      await this.restClient.updatePlayer(
+        this.node.sessionId!,
+        this.voiceChannelId,
+        this.currentTrack.encoded,
+        this.rtpParams,
+      );
+    }
+  }
+
+  public async skip() {
+    this.currentTrack = this.queue.dequeue();
+
+    await this.play();
+  }
+
+  public async destroy() {
+    await this.restClient.destroyPlayer(
+      this.node.sessionId!,
+      this.voiceChannelId,
+    );
+  }
+}
+
+export { LavaPlayer };
