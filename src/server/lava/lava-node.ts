@@ -107,6 +107,7 @@ class LavaNode extends (EventEmitter as new () => TypedEmitter<LavaNodeEvents>) 
   private handleMessage(messageJson: string) {
     try {
       const message: WebSocketMessage = JSON.parse(messageJson);
+      logDebug('WebSocket message', message);
 
       switch (message.op) {
         case WebSocketOp.READY:

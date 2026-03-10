@@ -45,6 +45,13 @@ const execute = async (
   let voiceConnection = VoiceConnection.get(voiceChannelId);
   if (!voiceConnection) {
     voiceConnection = await VoiceConnection.create(context, voiceChannelId);
+
+    voiceConnection.audioProducer?.on("@close", async() => {
+      await context.lavaNode.destroyPlayer(voiceChannelId);
+
+      VoiceConnection.remove(voiceChannelId);
+    });
+
   }
 
   let player = context.lavaNode.getPlayer(voiceChannelId);
@@ -59,8 +66,6 @@ const execute = async (
     });
 
     player.on('queueEmpty', async () => {
-      await context.lavaNode.destroyPlayer(voiceChannelId);
-
       VoiceConnection.remove(voiceChannelId);
     });
   }
