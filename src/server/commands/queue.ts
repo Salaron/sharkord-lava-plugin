@@ -43,7 +43,7 @@ const execute = async (
   }
 
   // for some reason Sharkord cuts off message if it contains a quote
-  return message.replace(/'"`/g, "");
+  return message.replace(/['"]/g, '`');
 };
 
 const registerQueueCommand = (context: LavaPluginContext) => {
