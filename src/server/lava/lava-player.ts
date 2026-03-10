@@ -29,18 +29,16 @@ class LavaPlayer extends (EventEmitter as new () => TypedEmitter<LavaPlayerEvent
     this.voiceChannelId = voiceChannelId;
 
     this.node.on('trackStart', (ev) => {
-      this.retryCounter = 0;
       this.emit('trackStart', ev.track);
     });
 
     this.node.on('trackStuck', async (ev) => {
       this.retryCounter++;
       if (this.retryCounter >= 3) {
-        this.retryCounter = 0;
         await this.next();
+      } else {
+        await this.play(true);
       }
-
-      await this.play(true);
     });
 
     this.node.on('trackEnd', async (ev) => {
@@ -49,7 +47,6 @@ class LavaPlayer extends (EventEmitter as new () => TypedEmitter<LavaPlayerEvent
       }
 
       if (this.retryCounter >= 3) {
-        this.retryCounter = 0;
         await this.next();
       }
 
@@ -86,6 +83,7 @@ class LavaPlayer extends (EventEmitter as new () => TypedEmitter<LavaPlayerEvent
       this.emit('queueEmpty');
       return;
     }
+
     await this.restClient.updatePlayer(
       this.node.sessionId!,
       this.voiceChannelId,
@@ -97,6 +95,7 @@ class LavaPlayer extends (EventEmitter as new () => TypedEmitter<LavaPlayerEvent
   }
 
   public async next() {
+    this.retryCounter = 0;
     this.currentTrack = this.queue.shift();
 
     await this.play(true);
