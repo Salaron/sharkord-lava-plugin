@@ -14,11 +14,11 @@ const execute = async (
 ) => {
   const voiceChannelId = invoker.currentVoiceChannelId;
   if (!voiceChannelId)
-    return 'You must be in a voice channel to use this command.';
+    throw new Error('You must be in a voice channel to use this command.');
 
   const player = context.lavaNode.getPlayer(voiceChannelId);
   if (!player) {
-    return 'Nothing playing in current channel.';
+    throw new Error('Nothing playing in current channel.');
   }
 
   const searchResult = await context.lavaNode.search(args.query);

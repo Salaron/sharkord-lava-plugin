@@ -1,9 +1,13 @@
+import EventEmitter from 'events';
+import type TypedEmitter from 'typed-emitter';
+import { logDebug } from '../server';
 import { VoiceConnection } from '../voice/voice-connection';
 import type { LavaNode } from './lava-node';
 import type { LavaRestClient } from './lava-rest-client';
-import type { Track, TRtpOptions } from './types';
+import type { LavaPlayerEvents, Track, TRtpOptions } from './types';
+import { TrackEndReason } from './websocket-events';
 
-class LavaPlayer {
+class LavaPlayer extends (EventEmitter as new () => TypedEmitter<LavaPlayerEvents>) {
   public queue: Track[] = [];
   public currentTrack: Track | undefined;
   public volume: number = 100;
@@ -12,15 +16,48 @@ class LavaPlayer {
   private restClient: LavaRestClient;
   private rtpParams: TRtpOptions | undefined;
   private voiceChannelId: number;
+  private retryCounter = 0;
 
   constructor(
     lavaNode: LavaNode,
     restClient: LavaRestClient,
     voiceChannelId: number
   ) {
+    super();
     this.node = lavaNode;
     this.restClient = restClient;
     this.voiceChannelId = voiceChannelId;
+
+    this.node.on('trackStart', (ev) => {
+      this.retryCounter = 0;
+      this.emit('trackStart', ev.track);
+    });
+
+    this.node.on('trackStuck', async (ev) => {
+      this.retryCounter++;
+      if (this.retryCounter >= 3) {
+        this.retryCounter = 0;
+        await this.next();
+      }
+
+      await this.play(true);
+    });
+
+    this.node.on('trackEnd', async (ev) => {
+      if (ev.reason === TrackEndReason.FINISHED) {
+        await this.next();
+      }
+
+      if (this.retryCounter >= 3) {
+        this.retryCounter = 0;
+        await this.next();
+      }
+
+      if (ev.reason === TrackEndReason.LOAD_FAILED) {
+        this.retryCounter++;
+        await this.play(true);
+      }
+    });
   }
 
   public attachToVoiceConnection(voiceConnection: VoiceConnection) {
@@ -40,16 +77,23 @@ class LavaPlayer {
       this.currentTrack = this.queue.shift();
     }
 
-    if (this.currentTrack) {
-      await this.restClient.updatePlayer(
-        this.node.sessionId!,
-        this.voiceChannelId,
-        this.currentTrack.encoded,
-        this.volume,
-        replace,
-        this.rtpParams
-      );
+    logDebug(
+      `Playing in voice channel ${this.voiceChannelId} (queue length = ${this.queue.length})`,
+      this.currentTrack
+    );
+
+    if (!this.currentTrack) {
+      this.emit('queueEmpty');
+      return;
     }
+    await this.restClient.updatePlayer(
+      this.node.sessionId!,
+      this.voiceChannelId,
+      this.currentTrack.encoded,
+      this.volume,
+      replace,
+      this.rtpParams
+    );
   }
 
   public async next() {

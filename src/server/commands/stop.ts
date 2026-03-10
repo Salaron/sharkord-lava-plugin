@@ -9,7 +9,7 @@ const execute = async (
 ) => {
   const voiceChannelId = invoker.currentVoiceChannelId;
   if (!voiceChannelId)
-    return 'You must be in a voice channel to use this command.';
+    throw new Error('You must be in a voice channel to use this command.');
 
   try {
     await context.lavaNode.destroyPlayer(voiceChannelId);

@@ -1,4 +1,10 @@
 import type { LoadType } from './lava-rest-client';
+import type {
+  WebSocketPlayerUpdateEvent,
+  WebSocketTrackEndEvent,
+  WebSocketTrackStartEvent,
+  WebSocketTrackStuckEvent
+} from './websocket-events';
 
 export type TLavaNodeOptions = {
   host: string;
@@ -62,11 +68,13 @@ export type EmptyResult = {
 
 export type ErrorResult = {
   loadType: LoadType.ERROR;
-  data: {
-    message: string;
-    severity: 'common' | 'suspicious' | 'fault';
-    cause: string;
-  };
+  data: LavaException;
+};
+
+export type LavaException = {
+  message: string;
+  severity: 'common' | 'suspicious' | 'fault';
+  cause: string;
 };
 
 export type LoadTracksResponse =
@@ -75,3 +83,22 @@ export type LoadTracksResponse =
   | SearchResult
   | EmptyResult
   | ErrorResult;
+
+export type PlayerState = {
+  time: number;
+  position: number;
+  connected: boolean;
+  ping: number;
+};
+
+export type LavaNodeEvents = {
+  trackStart: (ev: WebSocketTrackStartEvent) => void;
+  trackEnd: (ev: WebSocketTrackEndEvent) => void;
+  trackStuck: (ev: WebSocketTrackStuckEvent) => void;
+  playerUpdate: (ev: WebSocketPlayerUpdateEvent) => void;
+};
+
+export type LavaPlayerEvents = {
+  trackStart: (track: Track) => void;
+  queueEmpty: () => void;
+};

@@ -51,16 +51,23 @@ const execute = async (
   if (!player) {
     player = context.lavaNode.createPlayer(voiceChannelId);
     player.volume = Math.min(Math.max(context.settings.getVolume(), 0), 100);
+    player.on('trackStart', (track) => {
+      voiceConnection.stream?.update({
+        title: track.info.title ?? 'Unknown track',
+        avatarUrl: track.info.artworkUrl
+      });
+    });
+
+    player.on('queueEmpty', async () => {
+      await context.lavaNode.destroyPlayer(voiceChannelId);
+
+      VoiceConnection.remove(voiceChannelId);
+    });
   }
   player.attachToVoiceConnection(voiceConnection);
 
   player.queue.push(...tracks);
   await player.play();
-
-  voiceConnection.stream?.update({
-    title: player.currentTrack?.info.title ?? 'Unknown track',
-    avatarUrl: player.currentTrack?.info.artworkUrl
-  });
 
   if (player.queue.length === 0)
     return `Playing: ${player.currentTrack?.info.author} — ${player.currentTrack?.info.title}`;

@@ -7,12 +7,13 @@ const execute = async (
   args: void
 ) => {
   const voiceChannelId = invoker.currentVoiceChannelId;
-  if (!voiceChannelId)
-    return 'You must be in a voice channel to use this command.';
+  if (!voiceChannelId) {
+    throw new Error('You must be in a voice channel to use this command.');
+  }
 
   const player = context.lavaNode.getPlayer(voiceChannelId);
-  if (!player || player.queue.length === 0) {
-    return 'Queue is empty.';
+  if (!player) {
+    throw new Error('Nothing playing in current channel.');
   }
 
   await player.next();

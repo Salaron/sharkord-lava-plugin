@@ -1,14 +1,26 @@
+import EventEmitter from 'events';
+import type TypedEmitter from 'typed-emitter';
 import { logDebug, logError } from '../server';
 import { LavaPlayer } from './lava-player';
 import { LavaRestClient } from './lava-rest-client';
-import type { LoadTracksResponse, TLavaNodeOptions } from './types';
+import type {
+  LavaNodeEvents,
+  LoadTracksResponse,
+  TLavaNodeOptions
+} from './types';
 import {
+  WebSocketEventType,
   WebSocketOp,
-  type WebSocketEvent,
-  type WebSocketReadyEvent
+  type WebSocketEventMessage,
+  type WebSocketMessage,
+  type WebSocketPlayerUpdateEvent,
+  type WebSocketReadyMessage,
+  type WebSocketTrackEndEvent,
+  type WebSocketTrackStartEvent,
+  type WebSocketTrackStuckEvent
 } from './websocket-events';
 
-class LavaNode {
+class LavaNode extends (EventEmitter as new () => TypedEmitter<LavaNodeEvents>) {
   public isConnected = false;
   public sessionId: string | undefined;
 
@@ -18,6 +30,7 @@ class LavaNode {
   private websocket: WebSocket | undefined;
 
   constructor(options: TLavaNodeOptions) {
+    super();
     this.options = options;
     this.restClient = new LavaRestClient(options);
   }
@@ -93,19 +106,48 @@ class LavaNode {
 
   private handleMessage(messageJson: string) {
     try {
-      const event: WebSocketEvent = JSON.parse(messageJson);
+      const message: WebSocketMessage = JSON.parse(messageJson);
 
-      switch (event.op) {
+      switch (message.op) {
         case WebSocketOp.READY:
-          const readyEvent = event as WebSocketReadyEvent;
-          this.sessionId = readyEvent.sessionId;
+          const readyMessage = message as WebSocketReadyMessage;
+          this.sessionId = readyMessage.sessionId;
+          break;
+
+        case WebSocketOp.EVENT:
+          const eventMessage = message as WebSocketEventMessage;
+          this.handleEvent(eventMessage);
+          break;
+
+        case WebSocketOp.STATS:
+          break;
+
+        case WebSocketOp.PLAYER_UPDATE:
+          const playerUpdateMessage = message as WebSocketPlayerUpdateEvent;
+          this.emit('playerUpdate', playerUpdateMessage);
           break;
 
         default:
-          logDebug('WebSocket unhandled message', event);
+          logDebug('WebSocket unhandled message', message);
       }
     } catch (err) {
       logError('WebSocket message handle error', err);
+    }
+  }
+
+  private handleEvent(event: WebSocketEventMessage) {
+    switch (event.type) {
+      case WebSocketEventType.TRACK_START:
+        this.emit('trackStart', event as WebSocketTrackStartEvent);
+        break;
+
+      case WebSocketEventType.TRACK_END:
+        this.emit('trackEnd', event as WebSocketTrackEndEvent);
+        break;
+
+      case WebSocketEventType.TRACK_STUCK:
+        this.emit('trackStuck', event as WebSocketTrackStuckEvent);
+        break;
     }
   }
 }
