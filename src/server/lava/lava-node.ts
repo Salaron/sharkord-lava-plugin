@@ -39,13 +39,11 @@ class LavaNode extends (EventEmitter as new () => TypedEmitter<LavaNodeEvents>) 
   public connect(): Promise<void> {
     if (this.isConnected) return Promise.resolve();
 
-    logInfo(
-      `Connecting to Lavalink ${this.options.host}:${this.options.port}...`
-    );
+    logInfo(`Connecting to Lavalink ${this.options.host}:${this.options.port}`);
 
     const url = `${this.options.secure ? 'wss' : 'ws'}://${this.options.host}:${this.options.port}/v4/websocket`;
 
-    return new Promise((resolve, reject) => {
+    return new Promise<void>((resolve, reject) => {
       const websocket = new WebSocket(url, {
         headers: {
           Authorization: this.options.password,
@@ -54,31 +52,47 @@ class LavaNode extends (EventEmitter as new () => TypedEmitter<LavaNodeEvents>) 
         }
       });
 
-      const onopen = () => {
-        this.isConnected = true;
+      const onOpen = () => {
         this.websocket = websocket;
-        websocket.removeEventListener('close', onclose);
 
-        websocket.addEventListener('close', this.disconnect);
-        websocket.addEventListener('message', (ev) => {
-          this.handleMessage(ev.data);
-          if (this.sessionId) {
-            logInfo('Connected to Lavalink');
-            logDebug(`Session Id = ${this.sessionId}`);
-            resolve();
-          }
-        });
+        websocket.removeEventListener('close', onClose);
+        websocket.addEventListener('close', this.disconnect.bind(this));
       };
 
-      const onclose = (ev: CloseEvent) => {
-        this.isConnected = false;
-        this.websocket = undefined;
-        websocket.removeEventListener('open', onopen);
-        reject(`Unable to establish connection with Lavalink: ${ev.reason}`);
+      const onMessage = (ev: MessageEvent) => {
+        this.handleMessage(ev.data);
+
+        if (!this.isConnected && this.sessionId) {
+          this.isConnected = true;
+
+          logInfo('Connected to Lavalink');
+          logDebug(`Session Id = ${this.sessionId}`);
+
+          resolve();
+        }
       };
 
-      websocket.addEventListener('open', onopen);
-      websocket.addEventListener('close', onclose);
+      const onClose = (ev: CloseEvent) => {
+        this.disconnect();
+
+        if (!this.isConnected) {
+          reject(
+            new Error(
+              `Unable to establish connection with Lavalink: ${ev.reason}`
+            )
+          );
+        }
+      };
+
+      const onError = () => {
+        this.disconnect();
+        reject(new Error('WebSocket error while connecting to Lavalink'));
+      };
+
+      websocket.addEventListener('open', onOpen);
+      websocket.addEventListener('message', onMessage);
+      websocket.addEventListener('close', onClose);
+      websocket.addEventListener('error', onError);
     });
   }
 
@@ -90,6 +104,7 @@ class LavaNode extends (EventEmitter as new () => TypedEmitter<LavaNodeEvents>) 
         this.websocket.close();
       } catch {}
 
+      this.players = new Map<number, LavaPlayer>();
       this.websocket = undefined;
       this.isConnected = false;
       this.sessionId = undefined;

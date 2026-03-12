@@ -48,8 +48,6 @@ const execute = async (
 
     voiceConnection.on('close', async () => {
       logDebug(`Voice connection for ${voiceChannelId} closed`);
-      VoiceConnection.remove(voiceChannelId);
-
       await context.lavaNode.destroyPlayer(voiceChannelId);
     });
   }

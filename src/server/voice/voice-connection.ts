@@ -22,8 +22,8 @@ class VoiceConnection extends (EventEmitter as new () => TypedEmitter<VoiceConne
 
   private transport: PlainTransport | undefined;
   private audioProducer: Producer | undefined;
-  public rtpSsrc = Math.floor(Math.random() * 1e9);
-  public rtpPacketType = 111;
+  private rtpSsrc = Math.floor(Math.random() * 1e9);
+  private rtpPacketType = 111;
 
   constructor(voiceChannelId: number) {
     super();
@@ -31,7 +31,9 @@ class VoiceConnection extends (EventEmitter as new () => TypedEmitter<VoiceConne
   }
 
   public static get(voiceChannelId: number): VoiceConnection | undefined {
-    return VoiceConnection.connections.get(voiceChannelId);
+    const voiceConnection = VoiceConnection.connections.get(voiceChannelId);
+    if (voiceConnection?.isOpened)
+      return voiceConnection;
   }
 
   public static async create(
@@ -59,7 +61,7 @@ class VoiceConnection extends (EventEmitter as new () => TypedEmitter<VoiceConne
 
     this.transport = await router.createPlainTransport({
       listenInfo: {
-        ip: context.settings.getAnnouncedAddress(),
+        ip: '0.0.0.0',
         announcedAddress: context.settings.getAnnouncedAddress(),
         portRange: {
           min: context.settings.getRtpMinPort(),
@@ -109,7 +111,7 @@ class VoiceConnection extends (EventEmitter as new () => TypedEmitter<VoiceConne
     };
   }
 
-  public close() {
+  public close = () => {
     try {
       this.stream?.remove();
     } catch {}
@@ -129,6 +131,8 @@ class VoiceConnection extends (EventEmitter as new () => TypedEmitter<VoiceConne
     this.transport = undefined;
     this.rtpOptions = undefined;
     this.isOpened = false;
+
+    VoiceConnection.connections.delete(this.voiceChannelId);
 
     this.emit('close');
   }
