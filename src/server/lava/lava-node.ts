@@ -52,11 +52,15 @@ class LavaNode extends (EventEmitter as new () => TypedEmitter<LavaNodeEvents>) 
         }
       });
 
+      const cleanup = () => {
+        websocket.removeEventListener('open', onOpen);
+        websocket.removeEventListener('message', onMessage);
+        websocket.removeEventListener('close', onClose);
+        websocket.removeEventListener('error', onError);
+      };
+
       const onOpen = () => {
         this.websocket = websocket;
-
-        websocket.removeEventListener('close', onClose);
-        websocket.addEventListener('close', this.disconnect.bind(this));
       };
 
       const onMessage = (ev: MessageEvent) => {
@@ -72,21 +76,20 @@ class LavaNode extends (EventEmitter as new () => TypedEmitter<LavaNodeEvents>) 
         }
       };
 
-      const onClose = (ev: CloseEvent) => {
+      const onClose = () => {
+        cleanup();
         this.disconnect();
-
         if (!this.isConnected) {
-          reject(
-            new Error(
-              `Unable to establish connection with Lavalink: ${ev.reason}`
-            )
-          );
+          reject(new Error(`Unable to establish connection with Lavalink`));
         }
       };
 
       const onError = () => {
+        cleanup();
         this.disconnect();
-        reject(new Error('WebSocket error while connecting to Lavalink'));
+        if (!this.isConnected) {
+          reject(new Error('WebSocket error while connecting to Lavalink'));
+        }
       };
 
       websocket.addEventListener('open', onOpen);
@@ -96,20 +99,26 @@ class LavaNode extends (EventEmitter as new () => TypedEmitter<LavaNodeEvents>) 
     });
   }
 
-  public disconnect() {
+  public disconnect = async () => {
     if (this.websocket) {
       logInfo('Closing connection with Lavalink');
+
+      for (const player of this.players.values()) {
+        try {
+          await player.destroy();
+        } catch {}
+      }
 
       try {
         this.websocket.close();
       } catch {}
 
-      this.players = new Map<number, LavaPlayer>();
+      this.players.clear();
       this.websocket = undefined;
       this.isConnected = false;
       this.sessionId = undefined;
     }
-  }
+  };
 
   public getPlayer(voiceChannelId: number): LavaPlayer | undefined {
     return this.players.get(voiceChannelId);
@@ -130,8 +139,7 @@ class LavaNode extends (EventEmitter as new () => TypedEmitter<LavaNodeEvents>) 
   }
 
   public async search(query: string): Promise<LoadTracksResponse> {
-    const tracks = await this.restClient.loadTracks(query);
-    return tracks;
+    return this.restClient.loadTracks(query);
   }
 
   private handleMessage(messageJson: string) {

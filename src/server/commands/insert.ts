@@ -40,8 +40,6 @@ const execute = async (
       throw new Error(`An error occured: ${searchResult.data.message}`);
   }
 
-  context.debug(`Found ${tracks.length} results for query '${args.query}'`);
-
   player.queue.unshift(...tracks);
 
   if (tracks.length === 1) {

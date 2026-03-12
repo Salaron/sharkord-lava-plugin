@@ -1,6 +1,6 @@
 import EventEmitter from 'events';
 import type TypedEmitter from 'typed-emitter';
-import { logDebug } from '../server';
+import { logDebug, logError } from '../server';
 import { VoiceConnection } from '../voice/voice-connection';
 import type { LavaNode } from './lava-node';
 import type { LavaRestClient } from './lava-rest-client';
@@ -8,6 +8,7 @@ import type { Track, TRtpOptions } from './types';
 import { TrackEndReason } from './websocket-events';
 
 type LavaPlayerEvents = {
+  close: () => void;
   trackStart: (track: Track) => void;
   queueEmpty: () => void;
 };
@@ -104,10 +105,17 @@ class LavaPlayer extends (EventEmitter as new () => TypedEmitter<LavaPlayerEvent
   }
 
   public async destroy() {
-    await this.restClient.destroyPlayer(
-      this.node.sessionId!,
-      this.voiceChannelId
-    );
+    logDebug(`Destroying player ${this.voiceChannelId}`);
+
+    try {
+      await this.restClient.destroyPlayer(
+        this.node.sessionId!,
+        this.voiceChannelId
+      );
+    } catch (err) {
+      logError('Failed to destoy player', err);
+    }
+    this.emit('close');
   }
 }
 

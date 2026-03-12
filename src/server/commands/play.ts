@@ -40,8 +40,6 @@ const execute = async (
       throw new Error(`An error occured: ${searchResult.data.message}`);
   }
 
-  context.debug(`Found ${tracks.length} results for query '${args.query}'`);
-
   let voiceConnection = VoiceConnection.get(voiceChannelId);
   if (!voiceConnection) {
     voiceConnection = await VoiceConnection.create(context, voiceChannelId);
@@ -63,7 +61,10 @@ const execute = async (
       });
     });
 
-    player.on('queueEmpty', async () => {
+    player.on('close', () => {
+      VoiceConnection.remove(voiceChannelId);
+    });
+    player.on('queueEmpty', () => {
       VoiceConnection.remove(voiceChannelId);
     });
     player.attachToVoiceConnection(voiceConnection);
