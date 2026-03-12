@@ -3,19 +3,30 @@ import type {
   Producer,
   TExternalStreamHandle
 } from '@sharkord/plugin-sdk';
+import EventEmitter from 'events';
+import type TypedEmitter from 'typed-emitter';
+import type { TRtpOptions } from '../lava/types';
 import type { LavaPluginContext } from '../server';
 
-class VoiceConnection {
+type VoiceConnectionEvents = {
+  close: () => void;
+};
+
+class VoiceConnection extends (EventEmitter as new () => TypedEmitter<VoiceConnectionEvents>) {
   private static connections = new Map<number, VoiceConnection>();
 
   public voiceChannelId: number;
-  public transport: PlainTransport | undefined;
-  public audioProducer: Producer | undefined;
+  public isOpened = false;
+  public rtpOptions: TRtpOptions | undefined;
   public stream: TExternalStreamHandle | undefined;
+
+  private transport: PlainTransport | undefined;
+  private audioProducer: Producer | undefined;
   public rtpSsrc = Math.floor(Math.random() * 1e9);
   public rtpPacketType = 111;
 
   constructor(voiceChannelId: number) {
+    super();
     this.voiceChannelId = voiceChannelId;
   }
 
@@ -43,12 +54,12 @@ class VoiceConnection {
     }
   }
 
-  private async open(context: LavaPluginContext) {
+  public async open(context: LavaPluginContext) {
     const router = context.actions.voice.getRouter(this.voiceChannelId);
 
     this.transport = await router.createPlainTransport({
       listenInfo: {
-        ip: '0.0.0.0',
+        ip: context.settings.getAnnouncedAddress(),
         announcedAddress: context.settings.getAnnouncedAddress(),
         portRange: {
           min: context.settings.getRtpMinPort(),
@@ -60,6 +71,7 @@ class VoiceConnection {
       comedia: true,
       enableSrtp: false
     });
+    this.transport.on('@close', this.close);
 
     this.audioProducer = await this.transport.produce({
       kind: 'audio',
@@ -77,6 +89,7 @@ class VoiceConnection {
         encodings: [{ ssrc: this.rtpSsrc }]
       }
     });
+    this.audioProducer.on('@close', this.close);
 
     this.stream = context.actions.voice.createStream({
       key: `lavalink-${this.voiceChannelId}`,
@@ -86,22 +99,38 @@ class VoiceConnection {
         audio: this.audioProducer
       }
     });
+
+    this.isOpened = true;
+    this.rtpOptions = {
+      host: this.transport.tuple.localIp,
+      port: this.transport.tuple.localPort,
+      ssrc: this.rtpSsrc,
+      payloadType: this.rtpPacketType
+    };
   }
 
-  private close() {
-    this.stream?.remove();
+  public close() {
+    try {
+      this.stream?.remove();
+    } catch {}
 
     try {
+      this.audioProducer?.off('@close', this.close);
       this.audioProducer?.close();
     } catch {}
 
     try {
+      this.transport?.off('@close', this.close);
       this.transport?.close();
     } catch {}
 
     this.stream = undefined;
     this.audioProducer = undefined;
     this.transport = undefined;
+    this.rtpOptions = undefined;
+    this.isOpened = false;
+
+    this.emit('close');
   }
 }
 

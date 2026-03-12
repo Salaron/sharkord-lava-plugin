@@ -1,13 +1,9 @@
 import EventEmitter from 'events';
 import type TypedEmitter from 'typed-emitter';
-import { logDebug, logError } from '../server';
+import { logDebug, logError, logInfo } from '../server';
 import { LavaPlayer } from './lava-player';
 import { LavaRestClient } from './lava-rest-client';
-import type {
-  LavaNodeEvents,
-  LoadTracksResponse,
-  TLavaNodeOptions
-} from './types';
+import type { LoadTracksResponse, TLavaNodeOptions } from './types';
 import {
   WebSocketEventType,
   WebSocketOp,
@@ -16,9 +12,14 @@ import {
   type WebSocketPlayerUpdateEvent,
   type WebSocketReadyMessage,
   type WebSocketTrackEndEvent,
-  type WebSocketTrackStartEvent,
-  type WebSocketTrackStuckEvent
+  type WebSocketTrackStartEvent
 } from './websocket-events';
+
+type LavaNodeEvents = {
+  trackStart: (ev: WebSocketTrackStartEvent) => void;
+  trackEnd: (ev: WebSocketTrackEndEvent) => void;
+  playerUpdate: (ev: WebSocketPlayerUpdateEvent) => void;
+};
 
 class LavaNode extends (EventEmitter as new () => TypedEmitter<LavaNodeEvents>) {
   public isConnected = false;
@@ -38,6 +39,10 @@ class LavaNode extends (EventEmitter as new () => TypedEmitter<LavaNodeEvents>) 
   public connect(): Promise<void> {
     if (this.isConnected) return Promise.resolve();
 
+    logInfo(
+      `Connecting to Lavalink ${this.options.host}:${this.options.port}...`
+    );
+
     const url = `${this.options.secure ? 'wss' : 'ws'}://${this.options.host}:${this.options.port}/v4/websocket`;
 
     return new Promise((resolve, reject) => {
@@ -54,17 +59,22 @@ class LavaNode extends (EventEmitter as new () => TypedEmitter<LavaNodeEvents>) 
         this.websocket = websocket;
         websocket.removeEventListener('close', onclose);
 
+        websocket.addEventListener('close', this.disconnect);
         websocket.addEventListener('message', (ev) => {
           this.handleMessage(ev.data);
-          if (this.sessionId) resolve();
+          if (this.sessionId) {
+            logInfo('Connected to Lavalink');
+            logDebug(`Session Id = ${this.sessionId}`);
+            resolve();
+          }
         });
       };
 
-      const onclose = () => {
+      const onclose = (ev: CloseEvent) => {
         this.isConnected = false;
         this.websocket = undefined;
         websocket.removeEventListener('open', onopen);
-        reject();
+        reject(`Unable to establish connection with Lavalink: ${ev.reason}`);
       };
 
       websocket.addEventListener('open', onopen);
@@ -74,7 +84,12 @@ class LavaNode extends (EventEmitter as new () => TypedEmitter<LavaNodeEvents>) 
 
   public disconnect() {
     if (this.websocket) {
-      this.websocket.close();
+      logInfo('Closing connection with Lavalink');
+
+      try {
+        this.websocket.close();
+      } catch {}
+
       this.websocket = undefined;
       this.isConnected = false;
       this.sessionId = undefined;
@@ -116,16 +131,14 @@ class LavaNode extends (EventEmitter as new () => TypedEmitter<LavaNodeEvents>) 
           break;
 
         case WebSocketOp.EVENT:
-          const eventMessage = message as WebSocketEventMessage;
-          this.handleEvent(eventMessage);
+          this.handleEvent(message as WebSocketEventMessage);
           break;
 
         case WebSocketOp.STATS:
           break;
 
         case WebSocketOp.PLAYER_UPDATE:
-          const playerUpdateMessage = message as WebSocketPlayerUpdateEvent;
-          this.emit('playerUpdate', playerUpdateMessage);
+          this.emit('playerUpdate', message as WebSocketPlayerUpdateEvent);
           break;
 
         default:
@@ -147,7 +160,11 @@ class LavaNode extends (EventEmitter as new () => TypedEmitter<LavaNodeEvents>) 
         break;
 
       case WebSocketEventType.TRACK_STUCK:
-        this.emit('trackStuck', event as WebSocketTrackStuckEvent);
+        logError('Track stuck');
+        break;
+
+      case WebSocketEventType.TRACK_EXCEPTION:
+        logError('Track exception');
         break;
     }
   }

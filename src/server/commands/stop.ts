@@ -11,12 +11,6 @@ const execute = async (
   if (!voiceChannelId)
     throw new Error('You must be in a voice channel to use this command.');
 
-  try {
-    await context.lavaNode.destroyPlayer(voiceChannelId);
-  } catch (err) {
-    context.error('Failed to destroy Lavalink player', err);
-  }
-
   VoiceConnection.remove(voiceChannelId);
 };
 

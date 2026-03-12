@@ -1,10 +1,4 @@
 import type { LoadType } from './lava-rest-client';
-import type {
-  WebSocketPlayerUpdateEvent,
-  WebSocketTrackEndEvent,
-  WebSocketTrackStartEvent,
-  WebSocketTrackStuckEvent
-} from './websocket-events';
 
 export type TLavaNodeOptions = {
   host: string;
@@ -89,16 +83,4 @@ export type PlayerState = {
   position: number;
   connected: boolean;
   ping: number;
-};
-
-export type LavaNodeEvents = {
-  trackStart: (ev: WebSocketTrackStartEvent) => void;
-  trackEnd: (ev: WebSocketTrackEndEvent) => void;
-  trackStuck: (ev: WebSocketTrackStuckEvent) => void;
-  playerUpdate: (ev: WebSocketPlayerUpdateEvent) => void;
-};
-
-export type LavaPlayerEvents = {
-  trackStart: (track: Track) => void;
-  queueEmpty: () => void;
 };

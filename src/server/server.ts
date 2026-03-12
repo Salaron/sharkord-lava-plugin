@@ -24,8 +24,6 @@ const onLoad = async (context: LavaPluginContext) => {
   const password = process.env.LAVALINK_PASSWORD ?? 'youshallnotpass';
   const secure = process.env.LAVALINK_SECURE === '1';
 
-  context.log(`Connecting to Lavalink ${host}:${port}...`);
-
   try {
     context.lavaNode = lavaNode = new LavaNode({
       host: host,
@@ -34,11 +32,8 @@ const onLoad = async (context: LavaPluginContext) => {
       secure: secure
     });
     await context.lavaNode.connect();
-
-    context.log('Connected to Lavalink.');
-    context.debug(`Session Id = ${context.lavaNode.sessionId}`);
   } catch (err) {
-    context.error('Failed to connect to Lavalink', err);
+    context.error(err);
   }
 
   const settings = await context.settings.register([

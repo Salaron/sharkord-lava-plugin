@@ -1,7 +1,7 @@
 import type { CommandDefinition, TInvokerContext } from '@sharkord/plugin-sdk';
 import { LoadType } from '../lava/lava-rest-client';
 import type { Track } from '../lava/types';
-import type { LavaPluginContext } from '../server';
+import { logDebug, type LavaPluginContext } from '../server';
 import { VoiceConnection } from '../voice/voice-connection';
 
 type PlayCommandArgs = {
@@ -46,10 +46,11 @@ const execute = async (
   if (!voiceConnection) {
     voiceConnection = await VoiceConnection.create(context, voiceChannelId);
 
-    voiceConnection.audioProducer?.on('@close', async () => {
-      await context.lavaNode.destroyPlayer(voiceChannelId);
-
+    voiceConnection.on('close', async () => {
+      logDebug(`Voice connection for ${voiceChannelId} closed`);
       VoiceConnection.remove(voiceChannelId);
+
+      await context.lavaNode.destroyPlayer(voiceChannelId);
     });
   }
 
@@ -67,8 +68,8 @@ const execute = async (
     player.on('queueEmpty', async () => {
       VoiceConnection.remove(voiceChannelId);
     });
+    player.attachToVoiceConnection(voiceConnection);
   }
-  player.attachToVoiceConnection(voiceConnection);
 
   player.queue.push(...tracks);
   await player.play();
