@@ -14,6 +14,7 @@ import {
   type WebSocketTrackEndEvent,
   type WebSocketTrackStartEvent
 } from './websocket-events';
+import type { VoiceConnection } from '../voice/voice-connection';
 
 type LavaNodeEvents = {
   trackStart: (ev: WebSocketTrackStartEvent) => void;
@@ -124,9 +125,9 @@ class LavaNode extends (EventEmitter as new () => TypedEmitter<LavaNodeEvents>) 
     return this.players.get(voiceChannelId);
   }
 
-  public createPlayer(voiceChannelId: number): LavaPlayer {
-    const player = new LavaPlayer(this, this.restClient, voiceChannelId);
-    this.players.set(voiceChannelId, player);
+  public createPlayer(voiceConnection: VoiceConnection): LavaPlayer {
+    const player = new LavaPlayer(this, this.restClient, voiceConnection);
+    this.players.set(voiceConnection.voiceChannelId, player);
     return player;
   }
 

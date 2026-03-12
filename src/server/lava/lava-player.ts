@@ -4,8 +4,12 @@ import { logDebug, logError } from '../server';
 import { VoiceConnection } from '../voice/voice-connection';
 import type { LavaNode } from './lava-node';
 import type { LavaRestClient } from './lava-rest-client';
-import type { Track, TRtpOptions } from './types';
-import { TrackEndReason } from './websocket-events';
+import type { Track } from './types';
+import {
+  TrackEndReason,
+  type WebSocketTrackEndEvent,
+  type WebSocketTrackStartEvent
+} from './websocket-events';
 
 type LavaPlayerEvents = {
   close: () => void;
@@ -22,63 +26,38 @@ class LavaPlayer extends (EventEmitter as new () => TypedEmitter<LavaPlayerEvent
 
   private node: LavaNode;
   private restClient: LavaRestClient;
-  private rtpOptions: TRtpOptions | undefined;
-  private voiceChannelId: number;
+  private voiceConnection: VoiceConnection;
   private retryAttempts = 0;
 
   constructor(
     lavaNode: LavaNode,
     restClient: LavaRestClient,
-    voiceChannelId: number
+    voiceConnection: VoiceConnection
   ) {
     super();
     this.node = lavaNode;
     this.restClient = restClient;
-    this.voiceChannelId = voiceChannelId;
+    this.voiceConnection = voiceConnection;
 
-    this.node.on('trackStart', (ev) => {
-      if (ev.guildId !== this.voiceChannelId.toString()) {
-        return;
-      }
-
-      this.emit('trackStart', ev.track);
-    });
-
-    this.node.on('trackEnd', async (ev) => {
-      if (ev.guildId !== this.voiceChannelId.toString()) {
-        return;
-      }
-
-      if (ev.reason === TrackEndReason.FINISHED) {
-        await this.next();
-      }
-
-      if (ev.reason === TrackEndReason.LOAD_FAILED) {
-        this.retryAttempts++;
-        if (this.retryAttempts >= LavaPlayer.MaxRetryAttempts) {
-          await this.next();
-          return;
-        }
-
-        await this.play(true);
-      }
-    });
-  }
-
-  public attachToVoiceConnection(voiceConnection: VoiceConnection) {
-    if (!voiceConnection.isOpened)
-      throw new Error('Cannot attach player to closed voice connection');
-
-    this.rtpOptions = voiceConnection.rtpOptions;
+    this.node.on('trackStart', this.onTrackStart);
+    this.node.on('trackEnd', this.onTrackEnd);
   }
 
   public async play(replace: boolean = false) {
+    if (!this.voiceConnection.isOpened) {
+      logDebug(
+        `Voice connection ${this.voiceConnection.voiceChannelId} closed`
+      );
+      await this.destroy();
+      return;
+    }
+
     if (!this.currentTrack) {
       this.currentTrack = this.queue.shift();
     }
 
     logDebug(
-      `Playing in voice channel ${this.voiceChannelId} (queue length = ${this.queue.length})`,
+      `Playing in voice channel ${this.voiceConnection.voiceChannelId} (queue length = ${this.queue.length})`,
       this.currentTrack
     );
 
@@ -89,11 +68,11 @@ class LavaPlayer extends (EventEmitter as new () => TypedEmitter<LavaPlayerEvent
 
     await this.restClient.updatePlayer(
       this.node.sessionId!,
-      this.voiceChannelId,
+      this.voiceConnection.voiceChannelId,
       this.currentTrack.encoded,
       this.volume,
       replace,
-      this.rtpOptions
+      this.voiceConnection.rtpOptions
     );
   }
 
@@ -105,18 +84,53 @@ class LavaPlayer extends (EventEmitter as new () => TypedEmitter<LavaPlayerEvent
   }
 
   public async destroy() {
-    logDebug(`Destroying player ${this.voiceChannelId}`);
+    logDebug(`Destroying player ${this.voiceConnection.voiceChannelId}`);
+
+    this.node.off('trackStart', this.onTrackStart);
+    this.node.off('trackEnd', this.onTrackEnd);
 
     try {
       await this.restClient.destroyPlayer(
         this.node.sessionId!,
-        this.voiceChannelId
+        this.voiceConnection.voiceChannelId
       );
     } catch (err) {
       logError('Failed to destoy player', err);
     }
+
+    this.currentTrack = undefined;
+    this.queue = [];
+
     this.emit('close');
   }
+
+  private onTrackStart = async (ev: WebSocketTrackStartEvent) => {
+    if (ev.guildId !== this.voiceConnection.voiceChannelId.toString()) {
+      return;
+    }
+
+    this.emit('trackStart', ev.track);
+  };
+
+  private onTrackEnd = async (ev: WebSocketTrackEndEvent) => {
+    if (ev.guildId !== this.voiceConnection.voiceChannelId.toString()) {
+      return;
+    }
+
+    if (ev.reason === TrackEndReason.FINISHED) {
+      await this.next();
+    }
+
+    if (ev.reason === TrackEndReason.LOAD_FAILED) {
+      this.retryAttempts++;
+      if (this.retryAttempts >= LavaPlayer.MaxRetryAttempts) {
+        await this.next();
+        return;
+      }
+
+      await this.play(true);
+    }
+  };
 }
 
 export { LavaPlayer };

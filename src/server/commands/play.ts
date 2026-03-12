@@ -52,7 +52,7 @@ const execute = async (
 
   let player = context.lavaNode.getPlayer(voiceChannelId);
   if (!player) {
-    player = context.lavaNode.createPlayer(voiceChannelId);
+    player = context.lavaNode.createPlayer(voiceConnection);
     player.volume = Math.min(Math.max(context.settings.getVolume(), 0), 100);
     player.on('trackStart', (track) => {
       voiceConnection.stream?.update({
@@ -67,7 +67,6 @@ const execute = async (
     player.on('queueEmpty', () => {
       VoiceConnection.remove(voiceChannelId);
     });
-    player.attachToVoiceConnection(voiceConnection);
   }
 
   player.queue.push(...tracks);
