@@ -1,6 +1,6 @@
 # Sharkord Lava Plugin
 
-A plugin to bring Discord-like music bot to [Sharkord](https://github.com/Sharkord/sharkord) powered by a [Lavalink fork](https://github.com/Salaron/Lavalink) with RTP support.
+A plugin to bring Discord-like music bot to [Sharkord](https://github.com/Sharkord/sharkord) powered by [Lavalink](https://github.com/lavalink-devs/Lavalink) with [RTP plugin](https://github.com/Salaron/lavalink-rtp-plugin).
 
 > [!WARNING]
 > This plugin is not compatible with Lavalink instances without RTP support!

@@ -52,11 +52,14 @@ class LavaRestClient {
           track: {
             encoded: encodedTrack
           },
-          volume,
-          rtp
+          volume
         }
       }
     );
+
+    await this.sendRequest('PATCH', `/v4/sessions/${sessionId}/players/${voiceChannelId}/rtp`, {
+      body: rtp
+    });
   }
 
   public async destroyPlayer(sessionId: string, voiceChannelId: number) {
