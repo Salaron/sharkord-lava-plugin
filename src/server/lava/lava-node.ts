@@ -1,6 +1,7 @@
 import EventEmitter from 'events';
 import type TypedEmitter from 'typed-emitter';
 import { logDebug, logError, logInfo } from '../server';
+import type { VoiceConnection } from '../voice/voice-connection';
 import { LavaPlayer } from './lava-player';
 import { LavaRestClient } from './lava-rest-client';
 import type { LoadTracksResponse, TLavaNodeOptions } from './types';
@@ -14,7 +15,6 @@ import {
   type WebSocketTrackEndEvent,
   type WebSocketTrackStartEvent
 } from './websocket-events';
-import type { VoiceConnection } from '../voice/voice-connection';
 
 type LavaNodeEvents = {
   trackStart: (ev: WebSocketTrackStartEvent) => void;
@@ -105,16 +105,14 @@ class LavaNode extends (EventEmitter as new () => TypedEmitter<LavaNodeEvents>) 
       logInfo('Closing connection with Lavalink');
 
       for (const player of this.players.values()) {
-        try {
-          await player.destroy();
-        } catch {}
+        await player.destroy();
       }
+      this.players.clear();
 
       try {
         this.websocket.close();
       } catch {}
 
-      this.players.clear();
       this.websocket = undefined;
       this.isConnected = false;
       this.sessionId = undefined;
@@ -135,8 +133,8 @@ class LavaNode extends (EventEmitter as new () => TypedEmitter<LavaNodeEvents>) 
     const player = this.players.get(voiceChannelId);
     if (!player) return;
 
-    await player.destroy();
     this.players.delete(voiceChannelId);
+    await player.destroy();
   }
 
   public async search(query: string): Promise<LoadTracksResponse> {

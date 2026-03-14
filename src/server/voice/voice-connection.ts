@@ -47,10 +47,10 @@ class VoiceConnection extends (EventEmitter as new () => TypedEmitter<VoiceConne
   }
 
   public static remove(voiceChannelId: number) {
-    if (VoiceConnection.connections.has(voiceChannelId)) {
-      const voiceConnection = VoiceConnection.connections.get(voiceChannelId)!;
-      voiceConnection.close();
+    const voiceConnection = VoiceConnection.connections.get(voiceChannelId);
 
+    if (voiceConnection) {
+      voiceConnection.close();
       VoiceConnection.connections.delete(voiceChannelId);
     }
   }
@@ -111,6 +111,9 @@ class VoiceConnection extends (EventEmitter as new () => TypedEmitter<VoiceConne
   }
 
   public close = () => {
+    if (!this.isOpened) return;
+
+    this.isOpened = false;
     this.audioProducer?.off('@close', this.close);
     this.transport?.off('@close', this.close);
 
@@ -130,7 +133,6 @@ class VoiceConnection extends (EventEmitter as new () => TypedEmitter<VoiceConne
     this.audioProducer = undefined;
     this.transport = undefined;
     this.rtpOptions = undefined;
-    this.isOpened = false;
 
     VoiceConnection.connections.delete(this.voiceChannelId);
 

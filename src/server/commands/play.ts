@@ -61,7 +61,7 @@ const execute = async (
       });
     });
 
-    player.on('close', () => {
+    player.on('destroy', () => {
       VoiceConnection.remove(voiceChannelId);
     });
     player.on('queueEmpty', () => {

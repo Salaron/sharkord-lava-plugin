@@ -12,7 +12,7 @@ import {
 } from './websocket-events';
 
 type LavaPlayerEvents = {
-  close: () => void;
+  destroy: () => void;
   trackStart: (track: Track) => void;
   queueEmpty: () => void;
 };
@@ -101,7 +101,7 @@ class LavaPlayer extends (EventEmitter as new () => TypedEmitter<LavaPlayerEvent
     this.currentTrack = undefined;
     this.queue = [];
 
-    this.emit('close');
+    this.emit('destroy');
   }
 
   private onTrackStart = async (ev: WebSocketTrackStartEvent) => {
