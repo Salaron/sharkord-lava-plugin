@@ -1,20 +1,21 @@
-import type { CommandDefinition, TInvokerContext } from '@sharkord/plugin-sdk';
+import type { TInvokerContext } from '@sharkord/plugin-sdk';
 import { LoadType } from '../lava/lava-rest-client';
-import type { Track } from '../lava/types';
+import type { TTrack } from '../lava/types';
 import type { LavaPluginContext } from '../server';
 
-type InsertCommandArgs = {
+type TInsertCommandArgs = {
   query: string;
 };
 
 const execute = async (
   context: LavaPluginContext,
   invoker: TInvokerContext,
-  args: InsertCommandArgs
+  args: TInsertCommandArgs
 ) => {
   const voiceChannelId = invoker.currentVoiceChannelId;
-  if (!voiceChannelId)
+  if (!voiceChannelId) {
     throw new Error('You must be in a voice channel to use this command.');
+  }
 
   const player = context.lavaNode.getPlayer(voiceChannelId);
   if (!player) {
@@ -23,7 +24,7 @@ const execute = async (
 
   const searchResult = await context.lavaNode.search(args.query);
 
-  const tracks: Track[] = [];
+  const tracks: TTrack[] = [];
   switch (searchResult.loadType) {
     case LoadType.PLAYLIST:
       tracks.push(...searchResult.data.tracks);
@@ -50,7 +51,7 @@ const execute = async (
 };
 
 const registerInsertCommand = (context: LavaPluginContext) => {
-  context.commands.register(<CommandDefinition<InsertCommandArgs>>{
+  context.commands.register({
     name: 'insert',
     description:
       'Insert a track right after the one that is currently playing.',
@@ -62,14 +63,8 @@ const registerInsertCommand = (context: LavaPluginContext) => {
         required: true
       }
     ],
-    executes: async (invoker, args) => {
-      try {
-        return await execute(context, invoker, args);
-      } catch (err) {
-        context.error(err);
-        throw err;
-      }
-    }
+    executes: async (invoker, args: TInsertCommandArgs) =>
+      await execute(context, invoker, args)
   });
 };
 

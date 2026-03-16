@@ -22,8 +22,9 @@ const execute = async (
   args: void
 ) => {
   const voiceChannelId = invoker.currentVoiceChannelId;
-  if (!voiceChannelId)
+  if (!voiceChannelId) {
     throw new Error('You must be in a voice channel to use this command.');
+  }
 
   const player = context.lavaNode.getPlayer(voiceChannelId);
   if (!player || player.queue.length === 0) {
@@ -51,14 +52,7 @@ const registerQueueCommand = (context: LavaPluginContext) => {
     name: 'queue',
     description: 'Show current queue.',
     args: [],
-    executes: async (invoker, args) => {
-      try {
-        return await execute(context, invoker, args);
-      } catch (err) {
-        context.error(err);
-        throw err;
-      }
-    }
+    executes: async (invoker, args) => await execute(context, invoker, args)
   });
 };
 

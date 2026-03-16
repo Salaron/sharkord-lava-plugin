@@ -1,4 +1,4 @@
-import type { LavaException, PlayerState, Track } from './types';
+import type { TLavaException, TPlayerState, TTrack } from './types';
 
 export enum WebSocketOp {
   READY = 'ready',
@@ -36,40 +36,36 @@ export interface WebSocketStatsMessage {
   op: WebSocketOp.STATS;
 }
 
-export interface WebSocketEventMessage {
+export interface WebSocketPlayerMessage extends WebSocketMessage {
+  guildId: string;
+}
+
+export interface WebSocketPlayerUpdateMessage extends WebSocketPlayerMessage {
+  op: WebSocketOp.PLAYER_UPDATE;
+  state: TPlayerState;
+}
+
+export interface WebSocketPlayerEvent extends WebSocketPlayerMessage {
   op: WebSocketOp.EVENT;
   type: WebSocketEventType;
+  track: TTrack;
 }
 
-export interface WebSocketTrackStartEvent extends WebSocketEventMessage {
+export interface WebSocketTrackStartEvent extends WebSocketPlayerEvent {
   type: WebSocketEventType.TRACK_START;
-  guildId: string;
-  track: Track;
 }
 
-export interface WebSocketTrackEndEvent extends WebSocketEventMessage {
-  type: WebSocketEventType.TRACK_START;
-  guildId: string;
-  track: Track;
+export interface WebSocketTrackEndEvent extends WebSocketPlayerEvent {
+  type: WebSocketEventType.TRACK_END;
   reason: TrackEndReason;
 }
 
-export interface WebSocketTrackExceptionEvent extends WebSocketEventMessage {
-  type: WebSocketEventType.TRACK_START;
-  guildId: string;
-  track: Track;
-  exception: LavaException;
+export interface WebSocketTrackExceptionEvent extends WebSocketPlayerEvent {
+  type: WebSocketEventType.TRACK_EXCEPTION;
+  exception: TLavaException;
 }
 
-export interface WebSocketTrackStuckEvent extends WebSocketEventMessage {
-  type: WebSocketEventType.TRACK_START;
-  guildId: string;
-  track: Track;
+export interface WebSocketTrackStuckEvent extends WebSocketPlayerEvent {
+  type: WebSocketEventType.TRACK_STUCK;
   thresholdMs: number;
-}
-
-export interface WebSocketPlayerUpdateEvent extends WebSocketMessage {
-  op: WebSocketOp.PLAYER_UPDATE;
-  guildId: string;
-  state: PlayerState;
 }

@@ -4,133 +4,131 @@ import { logDebug, logError } from '../server';
 import { VoiceConnection } from '../voice/voice-connection';
 import type { LavaNode } from './lava-node';
 import type { LavaRestClient } from './lava-rest-client';
-import type { Track } from './types';
+import type { TPlayerState, TTrack } from './types';
 import {
   TrackEndReason,
-  type WebSocketTrackEndEvent,
-  type WebSocketTrackStartEvent
+  WebSocketEventType,
+  WebSocketOp,
+  type WebSocketPlayerEvent,
+  type WebSocketPlayerMessage,
+  type WebSocketPlayerUpdateMessage,
+  type WebSocketTrackEndEvent
 } from './websocket-events';
 
-type LavaPlayerEvents = {
-  destroy: () => void;
-  trackStart: (track: Track) => void;
+type TLavaPlayerEvents = {
+  trackStart: (track: TTrack) => void;
+  trackEnd: (track: TTrack) => void;
   queueEmpty: () => void;
+  destroy: () => void;
+  update: (state: TPlayerState) => void;
 };
 
-class LavaPlayer extends (EventEmitter as new () => TypedEmitter<LavaPlayerEvents>) {
-  private static MaxRetryAttempts = 3;
-
-  public queue: Track[] = [];
-  public currentTrack: Track | undefined;
+class LavaPlayer extends (EventEmitter as new () => TypedEmitter<TLavaPlayerEvents>) {
+  public readonly queue: TTrack[] = [];
+  public currentTrack: TTrack | undefined;
   public volume: number = 100;
 
-  private node: LavaNode;
   private restClient: LavaRestClient;
   private voiceConnection: VoiceConnection;
-  private retryAttempts = 0;
+  private voiceChannelId: number;
+  private sessionId: string;
 
   constructor(
     lavaNode: LavaNode,
     restClient: LavaRestClient,
     voiceConnection: VoiceConnection
   ) {
+    if (!lavaNode.sessionId) throw new Error('Session id is missing.');
+
     super();
-    this.node = lavaNode;
     this.restClient = restClient;
     this.voiceConnection = voiceConnection;
-
-    this.node.on('trackStart', this.onTrackStart);
-    this.node.on('trackEnd', this.onTrackEnd);
+    this.voiceChannelId = this.voiceConnection.voiceChannelId;
+    this.sessionId = lavaNode.sessionId;
   }
 
   public async play(replace: boolean = false) {
-    if (!this.voiceConnection.isOpened) {
-      logDebug(
-        `Voice connection ${this.voiceConnection.voiceChannelId} closed`
-      );
-      await this.destroy();
-      return;
-    }
-
-    if (!this.currentTrack) {
-      this.currentTrack = this.queue.shift();
-    }
-
-    logDebug(
-      `Playing in voice channel ${this.voiceConnection.voiceChannelId} (queue length = ${this.queue.length})`,
-      this.currentTrack
-    );
-
-    if (!this.currentTrack) {
+    const track = this.currentTrack ?? this.queue.shift();
+    if (!track) {
       this.emit('queueEmpty');
       return;
     }
 
+    logDebug(
+      `Start playing ${track.info.title} (channel id = ${this.voiceChannelId}, queue length = ${this.queue.length}, replace = ${replace})`
+    );
+
     await this.restClient.updatePlayer(
-      this.node.sessionId!,
-      this.voiceConnection.voiceChannelId,
-      this.currentTrack.encoded,
+      this.sessionId,
+      this.voiceChannelId,
+      track.encoded,
       this.volume,
       replace,
       this.voiceConnection.rtpOptions
     );
+
+    this.currentTrack = track;
   }
 
   public async next() {
-    this.retryAttempts = 0;
     this.currentTrack = this.queue.shift();
 
     await this.play(true);
   }
 
   public async destroy() {
-    logDebug(`Destroying player ${this.voiceConnection.voiceChannelId}`);
-
-    this.node.off('trackStart', this.onTrackStart);
-    this.node.off('trackEnd', this.onTrackEnd);
-
     try {
-      await this.restClient.destroyPlayer(
-        this.node.sessionId!,
-        this.voiceConnection.voiceChannelId
-      );
+      await this.restClient.destroyPlayer(this.sessionId, this.voiceChannelId);
     } catch (err) {
       logError('Failed to destoy player', err);
     }
 
     this.currentTrack = undefined;
-    this.queue = [];
+    this.queue.length = 0;
 
     this.emit('destroy');
   }
 
-  private onTrackStart = async (ev: WebSocketTrackStartEvent) => {
-    if (ev.guildId !== this.voiceConnection.voiceChannelId.toString()) {
-      return;
+  public async handleMessage(message: WebSocketPlayerMessage) {
+    switch (message.op) {
+      case WebSocketOp.EVENT:
+        await this.handleEvent(message as WebSocketPlayerEvent);
+        break;
+
+      case WebSocketOp.PLAYER_UPDATE:
+        const updateMessage = message as WebSocketPlayerUpdateMessage;
+        this.emit('update', updateMessage.state);
+        break;
     }
+  }
 
-    this.emit('trackStart', ev.track);
-  };
+  private async handleEvent(ev: WebSocketPlayerEvent) {
+    switch (ev.type) {
+      case WebSocketEventType.TRACK_START:
+        this.emit('trackStart', ev.track);
+        break;
 
-  private onTrackEnd = async (ev: WebSocketTrackEndEvent) => {
-    if (ev.guildId !== this.voiceConnection.voiceChannelId.toString()) {
-      return;
+      case WebSocketEventType.TRACK_END:
+        const trackEndEvent = ev as WebSocketTrackEndEvent;
+        switch (trackEndEvent.reason) {
+          case TrackEndReason.FINISHED:
+          case TrackEndReason.LOAD_FAILED:
+            await this.next();
+            break;
+        }
+
+        this.emit('trackEnd', ev.track);
+        break;
+
+      case WebSocketEventType.TRACK_STUCK:
+        logError('Track stuck');
+        break;
+
+      case WebSocketEventType.TRACK_EXCEPTION:
+        logError('Track exception');
+        break;
     }
-
-    if (ev.reason === TrackEndReason.FINISHED) {
-      await this.next();
-    }
-
-    if (ev.reason === TrackEndReason.LOAD_FAILED) {
-      this.retryAttempts++;
-      if (this.retryAttempts >= LavaPlayer.MaxRetryAttempts) {
-        await this.next();
-        return;
-      }
-
-      await this.play(true);
-    }
-  };
+  }
 }
 
 export { LavaPlayer };

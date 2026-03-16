@@ -2,8 +2,11 @@ import {
   type PluginContext,
   type UnloadPluginContext
 } from '@sharkord/plugin-sdk';
+import pkg from '../../package.json';
 import { registerCommands } from './commands';
 import { LavaNode } from './lava/lava-node';
+
+export const LavalinkClientName = `${pkg.name}/${pkg.version}`;
 
 export interface LavaPluginContext extends Omit<PluginContext, 'settings'> {
   lavaNode: LavaNode;
@@ -24,19 +27,27 @@ const onLoad = async (context: LavaPluginContext) => {
   const password = process.env.LAVALINK_PASSWORD ?? 'youshallnotpass';
   const secure = process.env.LAVALINK_SECURE === '1';
 
-  try {
-    context.lavaNode = lavaNode = new LavaNode({
-      host: host,
-      port: +port,
-      password: password,
-      secure: secure
-    });
-    await context.lavaNode.connect();
-  } catch (err) {
-    context.error(err);
-  }
+  context.lavaNode = lavaNode = new LavaNode({
+    host: host,
+    port: +port,
+    password: password,
+    secure: secure
+  });
+
+  lavaNode.on('idle', () => {
+    context.log('No players left, disconnecting from Lavalink');
+    void lavaNode?.disconnect();
+  });
 
   const settings = await context.settings.register([
+    {
+      key: 'announced-address',
+      name: 'Announced address',
+      description:
+        'Address sent to Lavalink so it can stream audio to Sharkord. Use this if Lavalink is hosted on another machine or network.',
+      type: 'string',
+      defaultValue: '127.0.0.1'
+    },
     {
       key: 'rtp-min-port',
       name: 'RTP min port',
@@ -52,30 +63,31 @@ const onLoad = async (context: LavaPluginContext) => {
       defaultValue: 20010
     },
     {
-      key: 'announced-address',
-      name: 'Announced address',
-      description:
-        'Address sent to Lavalink so it can stream audio to Sharkord. Use this if Lavalink is hosted on another machine or network.',
-      type: 'string',
-      defaultValue: '127.0.0.1'
-    },
-    {
       key: 'volume',
       name: 'Volume',
       description: 'Default volume level (0-100).',
       type: 'number',
       defaultValue: 50
+    },
+    {
+      key: 'debug',
+      name: 'Debug',
+      description: 'Enable debug logging (requires plugin reload).',
+      type: 'boolean',
+      defaultValue: false
     }
   ]);
 
-  context.settings.getRtpMinPort = () =>
-    settings.get('rtp-min-port') as unknown as number;
-  context.settings.getRtpMaxPort = () =>
-    settings.get('rtp-max-port') as unknown as number;
+  context.settings.getRtpMinPort = () => +settings.get('rtp-min-port');
+  context.settings.getRtpMaxPort = () => +settings.get('rtp-max-port');
   context.settings.getAnnouncedAddress = () =>
     settings.get('announced-address');
-  context.settings.getVolume = () =>
-    settings.get('volume') as unknown as number;
+  context.settings.getVolume = () => +settings.get('volume');
+
+  const enableDebug = settings.get('debug');
+  if (!enableDebug) {
+    context.debug = () => {};
+  }
 
   registerCommands(context);
 
@@ -86,6 +98,8 @@ const onLoad = async (context: LavaPluginContext) => {
 
 const onUnload = (context: UnloadPluginContext) => {
   lavaNode?.disconnect();
+  lavaNode = undefined;
+  pluginContext = undefined;
 
   context.log('Lavalink plugin unloaded');
 };

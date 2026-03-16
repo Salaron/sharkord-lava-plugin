@@ -6,17 +6,16 @@ import type {
 import EventEmitter from 'events';
 import type TypedEmitter from 'typed-emitter';
 import type { TRtpOptions } from '../lava/types';
-import type { LavaPluginContext } from '../server';
+import { logDebug, type LavaPluginContext } from '../server';
 
-type VoiceConnectionEvents = {
+type TVoiceConnectionEvents = {
   close: () => void;
 };
 
-class VoiceConnection extends (EventEmitter as new () => TypedEmitter<VoiceConnectionEvents>) {
+class VoiceConnection extends (EventEmitter as new () => TypedEmitter<TVoiceConnectionEvents>) {
   private static connections = new Map<number, VoiceConnection>();
 
   public voiceChannelId: number;
-  public isOpened = false;
   public rtpOptions: TRtpOptions | undefined;
   public stream: TExternalStreamHandle | undefined;
 
@@ -32,7 +31,7 @@ class VoiceConnection extends (EventEmitter as new () => TypedEmitter<VoiceConne
 
   public static get(voiceChannelId: number): VoiceConnection | undefined {
     const voiceConnection = VoiceConnection.connections.get(voiceChannelId);
-    if (voiceConnection?.isOpened) return voiceConnection;
+    return voiceConnection;
   }
 
   public static async create(
@@ -41,6 +40,9 @@ class VoiceConnection extends (EventEmitter as new () => TypedEmitter<VoiceConne
   ) {
     const voiceConnection = new VoiceConnection(voiceChannelId);
     await voiceConnection.open(context);
+    voiceConnection.once('close', () =>
+      VoiceConnection.connections.delete(voiceChannelId)
+    );
     VoiceConnection.connections.set(voiceChannelId, voiceConnection);
 
     return voiceConnection;
@@ -48,14 +50,15 @@ class VoiceConnection extends (EventEmitter as new () => TypedEmitter<VoiceConne
 
   public static remove(voiceChannelId: number) {
     const voiceConnection = VoiceConnection.connections.get(voiceChannelId);
-
     if (voiceConnection) {
-      voiceConnection.close();
       VoiceConnection.connections.delete(voiceChannelId);
+      voiceConnection.close();
     }
   }
 
   public async open(context: LavaPluginContext) {
+    logDebug(`Creating voice connection ${this.voiceChannelId}`);
+
     const router = context.actions.voice.getRouter(this.voiceChannelId);
 
     this.transport = await router.createPlainTransport({
@@ -72,7 +75,7 @@ class VoiceConnection extends (EventEmitter as new () => TypedEmitter<VoiceConne
       comedia: true,
       enableSrtp: false
     });
-    this.transport.on('@close', this.close);
+    this.transport.once('@close', this.close);
 
     this.audioProducer = await this.transport.produce({
       kind: 'audio',
@@ -90,7 +93,7 @@ class VoiceConnection extends (EventEmitter as new () => TypedEmitter<VoiceConne
         encodings: [{ ssrc: this.rtpSsrc }]
       }
     });
-    this.audioProducer.on('@close', this.close);
+    this.audioProducer.once('@close', this.close);
 
     this.stream = context.actions.voice.createStream({
       key: `lavalink-${this.voiceChannelId}`,
@@ -101,7 +104,6 @@ class VoiceConnection extends (EventEmitter as new () => TypedEmitter<VoiceConne
       }
     });
 
-    this.isOpened = true;
     this.rtpOptions = {
       host: this.transport.tuple.localIp,
       port: this.transport.tuple.localPort,
@@ -111,9 +113,8 @@ class VoiceConnection extends (EventEmitter as new () => TypedEmitter<VoiceConne
   }
 
   public close = () => {
-    if (!this.isOpened) return;
+    logDebug(`Closing voice connection ${this.voiceChannelId}`);
 
-    this.isOpened = false;
     this.audioProducer?.off('@close', this.close);
     this.transport?.off('@close', this.close);
 
@@ -133,8 +134,6 @@ class VoiceConnection extends (EventEmitter as new () => TypedEmitter<VoiceConne
     this.audioProducer = undefined;
     this.transport = undefined;
     this.rtpOptions = undefined;
-
-    VoiceConnection.connections.delete(this.voiceChannelId);
 
     this.emit('close');
   };

@@ -8,8 +8,9 @@ const execute = async (
   args: void
 ) => {
   const voiceChannelId = invoker.currentVoiceChannelId;
-  if (!voiceChannelId)
+  if (!voiceChannelId) {
     throw new Error('You must be in a voice channel to use this command.');
+  }
 
   VoiceConnection.remove(voiceChannelId);
 };
@@ -19,14 +20,7 @@ const registerStopCommand = (context: LavaPluginContext) => {
     name: 'stop',
     description: 'Stop music.',
     args: [],
-    executes: async (invoker, args) => {
-      try {
-        return await execute(context, invoker, args);
-      } catch (err) {
-        context.error(err);
-        throw err;
-      }
-    }
+    executes: async (invoker, args) => await execute(context, invoker, args)
   });
 };
 

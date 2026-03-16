@@ -14,7 +14,7 @@ export type TRtpOptions = {
   payloadType: number;
 };
 
-export type Track = {
+export type TTrack = {
   encoded: string;
   info: {
     identifier: string;
@@ -31,54 +31,54 @@ export type Track = {
   };
 };
 
-export type Playlist = {
+export type TPlaylist = {
   encoded: string;
   info: {
     name: string;
     selectedTrack: number;
   };
-  tracks: Track[];
+  tracks: TTrack[];
 };
 
-export type TrackResult = {
+export type TTrackResult = {
   loadType: LoadType.TRACK;
-  data: Track;
+  data: TTrack;
 };
 
-export type PlaylistResult = {
+export type TPlaylistResult = {
   loadType: LoadType.PLAYLIST;
-  data: Playlist;
+  data: TPlaylist;
 };
 
-export type SearchResult = {
+export type TSearchResult = {
   loadType: LoadType.SEARCH;
-  data: Track[];
+  data: TTrack[];
 };
 
-export type EmptyResult = {
+export type TEmptyResult = {
   loadType: LoadType.EMPTY;
   data: Record<string, never>;
 };
 
-export type ErrorResult = {
+export type TErrorResult = {
   loadType: LoadType.ERROR;
-  data: LavaException;
+  data: TLavaException;
 };
 
-export type LavaException = {
+export type TLavaException = {
   message: string;
   severity: 'common' | 'suspicious' | 'fault';
   cause: string;
 };
 
-export type LoadTracksResponse =
-  | TrackResult
-  | PlaylistResult
-  | SearchResult
-  | EmptyResult
-  | ErrorResult;
+export type TLoadTracksResponse =
+  | TTrackResult
+  | TPlaylistResult
+  | TSearchResult
+  | TEmptyResult
+  | TErrorResult;
 
-export type PlayerState = {
+export type TPlayerState = {
   time: number;
   position: number;
   connected: boolean;

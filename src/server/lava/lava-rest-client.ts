@@ -1,6 +1,7 @@
+import { LavalinkClientName } from '../server';
 import type {
-  LoadTracksResponse,
   TLavaNodeOptions,
+  TLoadTracksResponse,
   TRtpOptions
 } from './types';
 
@@ -24,12 +25,12 @@ class LavaRestClient {
     this.options = options;
   }
 
-  public async loadTracks(identifier: string): Promise<LoadTracksResponse> {
+  public async loadTracks(identifier: string): Promise<TLoadTracksResponse> {
     const response = await this.sendRequest('GET', '/v4/loadtracks', {
       queryParams: { identifier }
     });
 
-    const loadTracksResponse = (await response.json()) as LoadTracksResponse;
+    const loadTracksResponse = (await response.json()) as TLoadTracksResponse;
     return loadTracksResponse;
   }
 
@@ -39,7 +40,7 @@ class LavaRestClient {
     encodedTrack: string,
     volume: number,
     replace: boolean,
-    rtp?: TRtpOptions
+    rtpOptions?: TRtpOptions
   ) {
     await this.sendRequest(
       'PATCH',
@@ -57,9 +58,13 @@ class LavaRestClient {
       }
     );
 
-    await this.sendRequest('PATCH', `/v4/sessions/${sessionId}/players/${voiceChannelId}/rtp`, {
-      body: rtp
-    });
+    await this.sendRequest(
+      'PATCH',
+      `/v4/sessions/${sessionId}/players/${voiceChannelId}/rtp`,
+      {
+        body: rtpOptions
+      }
+    );
   }
 
   public async destroyPlayer(sessionId: string, voiceChannelId: number) {
@@ -83,10 +88,9 @@ class LavaRestClient {
 
     const request: RequestInit = {
       method,
-      body: JSON.stringify(options?.body),
       headers: {
         Authorization: this.options.password,
-        'Client-Name': 'Sharkord-Lava-Plugin/0.0.1',
+        'Client-Name': LavalinkClientName,
         'Content-Type': 'application/json'
       }
     };
