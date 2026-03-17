@@ -22,7 +22,7 @@ let lavaNode: LavaNode | undefined;
 let pluginContext: LavaPluginContext | undefined;
 
 const onLoad = async (context: LavaPluginContext) => {
-  const host = process.env.LAVALINK_HOST ?? 'localhost';
+  const host = process.env.LAVALINK_HOST ?? '127.0.0.1';
   const port = process.env.LAVALINK_PORT ?? 2333;
   const password = process.env.LAVALINK_PASSWORD ?? 'youshallnotpass';
   const secure = process.env.LAVALINK_SECURE === '1';
@@ -70,6 +70,14 @@ const onLoad = async (context: LavaPluginContext) => {
       defaultValue: 50
     },
     {
+      key: 'command-prefix',
+      name: 'Command prefix',
+      description:
+        'A custom prefix added to all commands. Use this if there are conflicts with other plugins (requires plugin reload).',
+      type: 'string',
+      defaultValue: ''
+    },
+    {
       key: 'debug',
       name: 'Debug',
       description: 'Enable debug logging (requires plugin reload).',
@@ -84,9 +92,18 @@ const onLoad = async (context: LavaPluginContext) => {
     settings.get('announced-address');
   context.settings.getVolume = () => +settings.get('volume');
 
-  const enableDebug = settings.get('debug');
-  if (!enableDebug) {
+  const enableDebugLogging = settings.get('debug');
+  if (!enableDebugLogging) {
     context.debug = () => {};
+  }
+
+  const prefix = settings.get('command-prefix');
+  if (prefix.length !== 0) {
+    const registerCommand = context.commands.register;
+    context.commands.register = (command) => {
+      command.name = prefix + command.name;
+      return registerCommand(command);
+    };
   }
 
   registerCommands(context);
