@@ -1,0 +1,38 @@
+name: Build Plugin
+
+inputs:
+  version:
+    description: Set plugin version before build
+    required: false
+
+runs:
+  using: composite
+  steps:
+    - name: Setup Bun
+      uses: oven-sh/setup-bun@v2
+
+    - name: Checkout Sharkord
+      uses: actions/checkout@v6
+      with:
+        repository: Sharkord/sharkord
+        path: sharkord
+        ref: v0.0.15
+
+    - name: Link SDK
+      shell: bash
+      working-directory: sharkord/packages/plugin-sdk
+      run: bun link
+
+    - name: Install dependencies
+      shell: bash
+      run: bun install
+
+    - name: Set version
+      if: ${{ inputs.version != '' }}
+      shell: bash
+      run: |
+        cat package.json | jq '.version = "${{ inputs.version }}"' | tee package.json
+
+    - name: Build plugin
+      shell: bash
+      run: bun run build
