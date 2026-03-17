@@ -55,7 +55,7 @@ class LavaPlayer extends (EventEmitter as new () => TypedEmitter<TLavaPlayerEven
     }
 
     logDebug(
-      `Start playing ${track.info.title} (channel id = ${this.voiceChannelId}, queue length = ${this.queue.length}, replace = ${replace})`
+      `Playing ${track.info.title} (channel id = ${this.voiceChannelId}, queue length = ${this.queue.length}, replace = ${replace})`
     );
 
     await this.restClient.updatePlayer(

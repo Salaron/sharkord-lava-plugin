@@ -63,6 +63,8 @@ class LavaNode extends (EventEmitter as new () => TypedEmitter<TLavaNodeEvents>)
       };
 
       const onMessage = (ev: MessageEvent) => {
+        logDebug('WebSocket message', ev.data);
+
         this.handleMessage(ev.data);
 
         if (!this.isConnected && this.sessionId) {
@@ -168,7 +170,6 @@ class LavaNode extends (EventEmitter as new () => TypedEmitter<TLavaNodeEvents>)
   private handleMessage(messageJson: string) {
     try {
       const message: WebSocketMessage = JSON.parse(messageJson);
-      logDebug('WebSocket message', message);
 
       switch (message.op) {
         case WebSocketOp.READY:
