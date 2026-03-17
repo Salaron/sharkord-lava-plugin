@@ -98,6 +98,11 @@ class LavaRestClient {
     if (options?.body) request.body = JSON.stringify(options.body);
 
     const response = await fetch(url, request);
+    if (!response.ok) {
+      const message = await response.text();
+      throw new Error(`${url} - ${response.status}: ${message}`);
+    }
+
     return response;
   }
 }

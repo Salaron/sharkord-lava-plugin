@@ -72,7 +72,13 @@ const execute = async (
   }
 
   player.queue.push(...tracks);
-  await player.play();
+
+  try {
+    await player.play();
+  } catch (err) {
+    void player.destroy();
+    throw err;
+  }
 
   if (player.queue.length === 0)
     return `Playing: ${player.currentTrack?.info.author} — ${player.currentTrack?.info.title}`;
