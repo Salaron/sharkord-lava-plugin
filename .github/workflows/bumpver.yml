@@ -4,7 +4,6 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        default: 'v'
         description: 'Version'
         required: true
         type: string
@@ -34,8 +33,9 @@ jobs:
           version: ${{ inputs.version }}
 
       - name: Zip release artifact
+        working-directory: dist
         run:
-          zip -r sharkord-lava-plugin-${{ inputs.version }}.zip dist/sharkord-lava-plugin
+          zip ../sharkord-lava-plugin-${{ inputs.version }}.zip -r sharkord-lava-plugin
 
       - name: Commit version bump
         run: |
@@ -43,13 +43,13 @@ jobs:
           git commit -m "chore: bump version to ${{ inputs.version }}"
 
       - name: Create Git tag
-        run: git tag ${{ inputs.version }}
+        run: git tag v${{ inputs.version }}
 
       - name: Create GitHub release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ inputs.version }}
-          name: ${{ inputs.version }}
+          tag_name: v${{ inputs.version }}
+          name: v${{ inputs.version }}
           draft: true
           files: sharkord-lava-plugin-${{ inputs.version }}.zip
 
