@@ -80,11 +80,14 @@ const execute = async (
     throw err;
   }
 
-  if (player.queue.length === 0)
-    return `Playing: ${player.currentTrack?.info.author} — ${player.currentTrack?.info.title}`;
+  if (player.queue.length === 0) {
+    const track = player.currentTrack!;
+    return `Playing: ${track.info.author} — ${track.info.title}`;
+  }
 
   if (tracks.length === 1) {
-    return `Added ${tracks[0]!.info.author} — ${tracks[0]!.info.title} to queue.`;
+    const track = tracks[0]!;
+    return `Added ${track.info.author} — ${track.info.title} to queue.`;
   }
 
   return `Added ${tracks.length} tracks to queue.`;
