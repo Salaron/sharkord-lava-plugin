@@ -18,9 +18,8 @@ type TLavaNodeEvents = {
 };
 
 class LavaNode extends (EventEmitter as new () => TypedEmitter<TLavaNodeEvents>) {
-  public isConnected = false;
-  public sessionId: string | undefined;
-
+  private _sessionId: string | undefined;
+  private _isConnected = false;
   private players = new Map<number, LavaPlayer>();
   private restClient: LavaRestClient;
   private options: TLavaNodeOptions;
@@ -31,6 +30,14 @@ class LavaNode extends (EventEmitter as new () => TypedEmitter<TLavaNodeEvents>)
     super();
     this.options = options;
     this.restClient = new LavaRestClient(options);
+  }
+
+  public get sessionId(): string | undefined {
+    return this._sessionId;
+  }
+
+  public get isConnected(): boolean | undefined {
+    return this._isConnected;
   }
 
   public connect(): Promise<void> {
@@ -68,7 +75,7 @@ class LavaNode extends (EventEmitter as new () => TypedEmitter<TLavaNodeEvents>)
         this.handleMessage(ev.data);
 
         if (!this.isConnected && this.sessionId) {
-          this.isConnected = true;
+          this._isConnected = true;
 
           this.idleTimer = setInterval(() => {
             if (this.isConnected && this.players.size === 0) {
@@ -85,7 +92,7 @@ class LavaNode extends (EventEmitter as new () => TypedEmitter<TLavaNodeEvents>)
         logInfo(`WebSocket closed`);
         cleanup();
         this.disconnect();
-        if (!this.isConnected) {
+        if (!this._isConnected) {
           reject(new Error(`Unable to establish connection with Lavalink`));
         }
       };
@@ -94,7 +101,7 @@ class LavaNode extends (EventEmitter as new () => TypedEmitter<TLavaNodeEvents>)
         logError(`WebSocket error`);
         cleanup();
         this.disconnect();
-        if (!this.isConnected) {
+        if (!this._isConnected) {
           reject(new Error('WebSocket error while connecting to Lavalink'));
         }
       };
@@ -107,15 +114,12 @@ class LavaNode extends (EventEmitter as new () => TypedEmitter<TLavaNodeEvents>)
   }
 
   public async disconnect() {
-    if (this.websocket) {
+    if (this.isConnected) {
       logInfo('Closing connection with Lavalink');
 
-      this.isConnected = false;
+      this._isConnected = false;
 
-      if (this.idleTimer) {
-        clearInterval(this.idleTimer);
-        this.idleTimer = undefined;
-      }
+      clearInterval(this.idleTimer);
 
       for (const [, player] of this.players) {
         await player.destroy();
@@ -126,12 +130,12 @@ class LavaNode extends (EventEmitter as new () => TypedEmitter<TLavaNodeEvents>)
       try {
         const websocket = this.websocket;
         this.websocket = undefined;
-        websocket.close();
+        websocket?.close();
       } catch (err) {
         logError('WebSocket close error', err);
       }
 
-      this.sessionId = undefined;
+      this._sessionId = undefined;
       this.emit('disconnect');
     }
   }
@@ -174,7 +178,7 @@ class LavaNode extends (EventEmitter as new () => TypedEmitter<TLavaNodeEvents>)
       switch (message.op) {
         case WebSocketOp.READY:
           const readyMessage = message as WebSocketReadyMessage;
-          this.sessionId = readyMessage.sessionId;
+          this._sessionId = readyMessage.sessionId;
           break;
 
         case WebSocketOp.EVENT:
