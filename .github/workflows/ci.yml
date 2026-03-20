@@ -24,7 +24,7 @@ jobs:
         run: bun lint
 
       - name: Upload Artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: sharkord-lava-plugin
           path: dist/sharkord-lava-plugin
