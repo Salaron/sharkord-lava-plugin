@@ -18,54 +18,68 @@ export interface LavaPluginContext extends Omit<PluginContext, 'settings'> {
   };
 }
 
-let lavaNode: LavaNode | undefined;
 let pluginContext: LavaPluginContext | undefined;
 
 const onLoad = async (context: LavaPluginContext) => {
-  const host = process.env.LAVALINK_HOST ?? '127.0.0.1';
-  const port = process.env.LAVALINK_PORT ?? 2333;
-  const password = process.env.LAVALINK_PASSWORD ?? 'youshallnotpass';
-  const secure = process.env.LAVALINK_SECURE === '1';
-
-  context.lavaNode = lavaNode = new LavaNode({
-    host: host,
-    port: +port,
-    password: password,
-    secure: secure
-  });
-
-  lavaNode.on('idle', () => {
-    context.log('No players left, disconnecting from Lavalink');
-    void lavaNode?.disconnect();
-  });
-
   const settings = await context.settings.register([
+    {
+      key: 'lavalink-host',
+      name: 'Lavalink Address',
+      description:
+        'The hostname or IP address that Lavalink is listening on. A plugin reload is required for changes to take effect.',
+      type: 'string',
+      defaultValue: '127.0.0.1'
+    },
+    {
+      key: 'lavalink-port',
+      name: 'Lavalink Port',
+      description:
+        'The port that Lavalink is listening on. A plugin reload is required for changes to take effect.',
+      type: 'number',
+      defaultValue: 2333
+    },
+    {
+      key: 'lavalink-password',
+      name: 'Lavalink Password',
+      description:
+        'The password used to authenticate with Lavalink. A plugin reload is required for changes to take effect.',
+      type: 'string',
+      defaultValue: 'youshallnotpass'
+    },
+    {
+      key: 'lavalink-secure',
+      name: 'Lavalink Secure Connection',
+      description:
+        'Whether an SSL/TLS connection to Lavalink should be used. A plugin reload is required for changes to take effect.',
+      type: 'boolean',
+      defaultValue: false
+    },
     {
       key: 'announced-address',
       name: 'Announced address',
       description:
-        'Address sent to Lavalink so it can stream audio to Sharkord. Use this if Lavalink is hosted on another machine or network.',
+        'The address sent to Lavalink so it can stream audio to Sharkord.',
       type: 'string',
       defaultValue: '127.0.0.1'
     },
     {
       key: 'rtp-min-port',
       name: 'RTP min port',
-      description: 'Start of UDP port range for audio streaming.',
+      description: 'The start of the UDP port range for audio streaming.',
       type: 'number',
       defaultValue: 20000
     },
     {
       key: 'rtp-max-port',
       name: 'RTP max port',
-      description: 'End of UDP port range for audio streaming.',
+      description: 'The end of the UDP port range for audio streaming.',
       type: 'number',
       defaultValue: 20010
     },
     {
       key: 'volume',
       name: 'Volume',
-      description: 'Default volume level (0-100).',
+      description: 'The music volume level (0–100).',
       type: 'number',
       defaultValue: 50
     },
@@ -73,14 +87,15 @@ const onLoad = async (context: LavaPluginContext) => {
       key: 'command-prefix',
       name: 'Command prefix',
       description:
-        'A custom prefix added to all commands. Use this if there are conflicts with other plugins (requires plugin reload).',
+        'A custom prefix added to all commands. A plugin reload is required for changes to take effect.',
       type: 'string',
       defaultValue: ''
     },
     {
-      key: 'debug',
+      key: 'debug-logging',
       name: 'Debug',
-      description: 'Enable debug logging (requires plugin reload).',
+      description:
+        'Whether debug (verbose) logging is enabled. A plugin reload is required for changes to take effect.',
       type: 'boolean',
       defaultValue: false
     }
@@ -92,10 +107,22 @@ const onLoad = async (context: LavaPluginContext) => {
     settings.get('announced-address');
   context.settings.getVolume = () => +settings.get('volume');
 
-  const enableDebugLogging = settings.get('debug');
+  const enableDebugLogging = settings.get('debug-logging');
   if (!enableDebugLogging) {
     context.debug = () => {};
   }
+
+  context.lavaNode = new LavaNode({
+    host: settings.get('lavalink-host'),
+    port: +settings.get('lavalink-port'),
+    password: settings.get('lavalink-password'),
+    secure: !!settings.get('lavalink-secure')
+  });
+
+  context.lavaNode.on('idle', () => {
+    context.log('No players left, disconnecting from Lavalink');
+    void context.lavaNode.disconnect();
+  });
 
   const prefix = settings.get('command-prefix');
   if (prefix.length !== 0) {
@@ -114,8 +141,7 @@ const onLoad = async (context: LavaPluginContext) => {
 };
 
 const onUnload = (context: UnloadPluginContext) => {
-  lavaNode?.disconnect();
-  lavaNode = undefined;
+  pluginContext?.lavaNode.disconnect();
   pluginContext = undefined;
 
   context.log('Lavalink plugin unloaded');
