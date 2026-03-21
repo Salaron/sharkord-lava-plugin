@@ -11,15 +11,6 @@
     "check-types": "tsc --noEmit",
     "magic": "bun --bun run lint:fix && bun --bun run format && bun --bun run check-types"
   },
-  "sharkord": {
-    "entry": {
-      "server": "server.js",
-      "client": "client.js"
-    },
-    "author": "Salaron",
-    "homepage": "https://github.com/Salaron/sharkord-lava-plugin",
-    "description": "Play music in voice channels using Lavalink."
-  },
   "dependencies": {
     "mediasoup": "^3.19.17"
   },

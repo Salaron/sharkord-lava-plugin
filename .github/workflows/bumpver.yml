@@ -40,6 +40,7 @@ jobs:
       - name: Commit version bump
         run: |
           git add package.json
+          git add manifest.json
           git commit -m "chore: bump version to ${{ inputs.version }}"
 
       - name: Create Git tag

@@ -1,5 +1,6 @@
 import type { BunPlugin } from 'bun';
 import fs from 'fs/promises';
+import path from 'path';
 
 const pluginId = 'sharkord-lava-plugin';
 const outdir = `dist/${pluginId}`;
@@ -44,7 +45,8 @@ const clientGlobals: BunPlugin = {
 await Promise.all([
   Bun.build({
     entrypoints: ['src/server/server.ts'],
-    outdir,
+    outdir: path.join(outdir, 'server'),
+    naming: 'index.js',
     target: 'bun',
     minify: true,
     format: 'esm',
@@ -53,7 +55,8 @@ await Promise.all([
 
   Bun.build({
     entrypoints: ['src/client/client.ts'],
-    outdir,
+    outdir: path.join(outdir, 'client'),
+    naming: 'index.js',
     target: 'browser',
     minify: true,
     format: 'esm',
@@ -62,3 +65,4 @@ await Promise.all([
 ]);
 
 await fs.copyFile('package.json', `${outdir}/package.json`);
+await fs.copyFile('manifest.json', `${outdir}/manifest.json`);
