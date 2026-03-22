@@ -1,6 +1,6 @@
 {
   "name": "sharkord-lava-plugin",
-  "version": "0.0.2",
+  "version": "0.1.1",
   "scripts": {
     "build": "bun build.ts",
     "build:dev": "bun run build && cp -r dist/* ../../apps/server/data/plugins/",
