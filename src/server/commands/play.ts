@@ -1,6 +1,4 @@
 import type { TInvokerContext } from '@sharkord/plugin-sdk';
-import { LoadType } from '../lava/lava-rest-client';
-import type { TTrack } from '../lava/types';
 import { logDebug, type LavaPluginContext } from '../server';
 import { VoiceConnection } from '../voice/voice-connection';
 
@@ -22,23 +20,9 @@ const execute = async (
     await context.lavaNode.connect();
   }
 
-  const searchResult = await context.lavaNode.search(args.query);
-
-  const tracks: TTrack[] = [];
-  switch (searchResult.loadType) {
-    case LoadType.PLAYLIST:
-      tracks.push(...searchResult.data.tracks);
-      break;
-    case LoadType.SEARCH:
-      tracks.push(searchResult.data[0]!);
-      break;
-    case LoadType.TRACK:
-      tracks.push(searchResult.data);
-      break;
-    case LoadType.EMPTY:
-      return 'No results found.';
-    case LoadType.ERROR:
-      throw new Error(`An error occured: ${searchResult.data.message}`);
+  const tracks = await context.lavaNode.search(args.query);
+  if (tracks.length === 0) {
+    return 'No results found';
   }
 
   let voiceConnection = VoiceConnection.get(voiceChannelId);

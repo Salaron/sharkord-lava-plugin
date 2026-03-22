@@ -3,8 +3,8 @@ import type TypedEmitter from 'typed-emitter';
 import { LavalinkClientName, logDebug, logError, logInfo } from '../server';
 import type { VoiceConnection } from '../voice/voice-connection';
 import { LavaPlayer } from './lava-player';
-import { LavaRestClient } from './lava-rest-client';
-import type { TLavaNodeOptions, TLoadTracksResponse } from './types';
+import { LavaRestClient, LoadType } from './lava-rest-client';
+import type { TLavaNodeOptions, TTrack } from './types';
 import {
   WebSocketOp,
   type WebSocketMessage,
@@ -167,8 +167,33 @@ class LavaNode extends (EventEmitter as new () => TypedEmitter<TLavaNodeEvents>)
     await player.destroy();
   }
 
-  public async search(query: string): Promise<TLoadTracksResponse> {
-    return this.restClient.loadTracks(query);
+  public async search(query: string): Promise<TTrack[]> {
+    const isUrl = /^https?:\/\//.test(query);
+
+    let searchResult = await this.restClient.loadTracks(query);
+    if (!isUrl && searchResult.loadType === LoadType.EMPTY) {
+      const searchPrefix = this.options.getSearchPrefix();
+      if (searchPrefix) {
+        searchResult = await this.restClient.loadTracks(searchPrefix + query);
+      }
+    }
+
+    const tracks: TTrack[] = [];
+    switch (searchResult.loadType) {
+      case LoadType.PLAYLIST:
+        tracks.push(...searchResult.data.tracks);
+        break;
+      case LoadType.SEARCH:
+        tracks.push(searchResult.data[0]!);
+        break;
+      case LoadType.TRACK:
+        tracks.push(searchResult.data);
+        break;
+      case LoadType.ERROR:
+        throw new Error(`Search error: ${searchResult.data.message}`);
+    }
+
+    return tracks;
   }
 
   private handleMessage(messageJson: string) {

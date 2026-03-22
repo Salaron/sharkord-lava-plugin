@@ -5,7 +5,7 @@ A plugin to bring a Discord-like music bot to
 [Lavalink](https://github.com/lavalink-devs/Lavalink) with the
 [RTP plugin](https://github.com/Salaron/lavalink-rtp-plugin).
 
-> [!WARNING] 
+> [!WARNING]
 > This plugin is not compatible with Lavalink instances without RTP
 > support!
 
@@ -28,9 +28,8 @@ A plugin to bring a Discord-like music bot to
 
 ## Installation
 
-0. Set up
-   [Lavalink](https://lavalink.dev/getting-started) and
-   install the [RTP plugin](https://github.com/Salaron/lavalink-rtp-plugin)
+0. Set up [Lavalink](https://lavalink.dev/getting-started) and install the
+   [RTP plugin](https://github.com/Salaron/lavalink-rtp-plugin)
 1. Download the latest release from the
    [Releases](https://github.com/Salaron/sharkord-lava-plugin/releases) page
 2. Extract archive to Sharkord plugins directory (`data/plugins`)
@@ -83,6 +82,14 @@ sure to open these ports in your firewall or Docker configuration.
 ### Volume
 
 The music volume level. Defaults to `50`.
+
+### Search prefix
+
+By default, adding a track via search requires specifying a search prefix (e.g.
+`scsearch:` for SoundCloud).
+
+You can configure a default search prefix to automatically apply to search
+queries when none is specified.
 
 ### Command prefix
 

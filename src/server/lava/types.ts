@@ -5,6 +5,7 @@ export type TLavaNodeOptions = {
   port: number;
   password: string;
   secure: boolean;
+  getSearchPrefix: () => string;
 };
 
 export type TRtpOptions = {

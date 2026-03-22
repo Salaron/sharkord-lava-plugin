@@ -84,10 +84,18 @@ const onLoad = async (context: LavaPluginContext) => {
       defaultValue: 50
     },
     {
+      key: 'search-prefix',
+      name: 'Search prefix',
+      description:
+        'A search prefix applied to search queries when no prefix specified (e.g. scsearch:).',
+      type: 'string',
+      defaultValue: ''
+    },
+    {
       key: 'command-prefix',
       name: 'Command prefix',
       description:
-        'A custom prefix added to all commands. A plugin reload is required for changes to take effect.',
+        'A custom prefix added to all plugin commands. A plugin reload is required for changes to take effect.',
       type: 'string',
       defaultValue: ''
     },
@@ -116,7 +124,8 @@ const onLoad = async (context: LavaPluginContext) => {
     host: settings.get('lavalink-host'),
     port: +settings.get('lavalink-port'),
     password: settings.get('lavalink-password'),
-    secure: !!settings.get('lavalink-secure')
+    secure: !!settings.get('lavalink-secure'),
+    getSearchPrefix: () => settings.get('search-prefix')
   });
 
   context.lavaNode.on('idle', () => {
