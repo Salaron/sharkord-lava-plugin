@@ -54,4 +54,4 @@ jobs:
           files: sharkord-lava-plugin-${{ inputs.version }}.zip
 
       - name: Push
-        run: git push origin --tags
+        run: git push --atomic origin HEAD v${{ inputs.version }}
