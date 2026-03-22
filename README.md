@@ -105,6 +105,17 @@ Whether debug (verbose) logging is enabled.
 
 A plugin reload is required for changes to take effect.
 
+## Troubleshooting
+
+**Q: The plugin joins the voice channel, but no music is playing.**  
+A: Make sure the RTP UDP port range is open in your firewall or Docker
+configuration on the Sharkord server.
+
+**Q: The search query in the `/play` command is truncated (e.g.
+`/play Imagine Dragons` is recognized as `/play Imagine`).**  
+A: Sharkord treats words as separate arguments. Wrap the query in quotes:
+`/play "Imagine Dragons"`.
+
 ## License
 
 This project is licensed under the MIT License. See the [LICENSE](LICENSE) file
