@@ -20,7 +20,7 @@ const registerStopCommand = (context: LavaPluginContext) => {
     name: 'stop',
     description: 'Stop music.',
     args: [],
-    executes: async (invoker, args) => await execute(context, invoker, args)
+    execute: async (invoker, args) => await execute(context, invoker, args)
   });
 };
 

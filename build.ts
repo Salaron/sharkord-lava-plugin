@@ -64,5 +64,4 @@ await Promise.all([
   })
 ]);
 
-await fs.copyFile('package.json', `${outdir}/package.json`);
 await fs.copyFile('manifest.json', `${outdir}/manifest.json`);

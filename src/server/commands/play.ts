@@ -89,7 +89,7 @@ const registerPlayCommand = (context: LavaPluginContext) => {
         required: true
       }
     ],
-    executes: async (invoker, args: TPlayCommandArgs) =>
+    execute: async (invoker, args: TPlayCommandArgs) =>
       await execute(context, invoker, args)
   });
 };

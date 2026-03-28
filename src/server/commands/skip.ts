@@ -24,7 +24,7 @@ const registerSkipCommand = (context: LavaPluginContext) => {
     name: 'skip',
     description: 'Skip the currently playing track.',
     args: [],
-    executes: async (invoker, args) => await execute(context, invoker, args)
+    execute: async (invoker, args) => await execute(context, invoker, args)
   });
 };
 

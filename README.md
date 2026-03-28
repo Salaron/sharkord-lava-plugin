@@ -42,26 +42,18 @@ A plugin to bring a Discord-like music bot to
 The hostname or IP address that Lavalink is listening on. Defaults to
 `127.0.0.1`.
 
-A plugin reload is required for changes to take effect.
-
 ### Lavalink port
 
 The port Lavalink is listening on. Defaults to `2333`.
-
-A plugin reload is required for changes to take effect.
 
 ### Lavalink password
 
 The Lavalink password. Defaults to `youshallnotpass`.
 
-A plugin reload is required for changes to take effect.
-
 ### Lavalink secure connection
 
 Whether an SSL/TLS connection to Lavalink should be used. By default, a
 non-secure connection is used.
-
-A plugin reload is required for changes to take effect.
 
 ### Announced address
 
@@ -102,8 +94,6 @@ A plugin reload is required for changes to take effect.
 ### Debug
 
 Whether debug (verbose) logging is enabled.
-
-A plugin reload is required for changes to take effect.
 
 ## Troubleshooting
 

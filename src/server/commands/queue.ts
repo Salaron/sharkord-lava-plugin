@@ -52,7 +52,7 @@ const registerQueueCommand = (context: LavaPluginContext) => {
     name: 'queue',
     description: 'Show current queue.',
     args: [],
-    executes: async (invoker, args) => await execute(context, invoker, args)
+    execute: async (invoker, args) => await execute(context, invoker, args)
   });
 };
 

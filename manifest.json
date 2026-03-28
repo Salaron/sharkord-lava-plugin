@@ -5,5 +5,5 @@
   "author": "Salaron",
   "description": "Play music in voice channels using Lavalink.",
   "homepage": "https://github.com/Salaron/sharkord-lava-plugin",
-  "sdkRange": "^0.1.0"
+  "sdkVersion": 1
 }
