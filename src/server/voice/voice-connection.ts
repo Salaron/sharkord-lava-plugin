@@ -59,7 +59,7 @@ class VoiceConnection extends (EventEmitter as new () => TypedEmitter<TVoiceConn
   public async open(context: LavaPluginContext) {
     logDebug(`Creating voice connection ${this.voiceChannelId}`);
 
-    const router = context.actions.voice.getRouter(this.voiceChannelId);
+    const router = context.voice.getRouter(this.voiceChannelId);
 
     this.transport = await router.createPlainTransport({
       listenInfo: {
@@ -95,7 +95,7 @@ class VoiceConnection extends (EventEmitter as new () => TypedEmitter<TVoiceConn
     });
     this.audioProducer.once('@close', this.close);
 
-    this.stream = context.actions.voice.createStream({
+    this.stream = context.voice.createStream({
       key: `lavalink-${this.voiceChannelId}`,
       channelId: this.voiceChannelId,
       title: 'Lavalink',

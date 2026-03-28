@@ -32,6 +32,7 @@ runs:
       shell: bash
       run: |
         cat package.json | jq '.version = "${{ inputs.version }}"' | tee package.json
+        cat manifest.json | jq '.version = "${{ inputs.version }}"' | tee manifest.json
 
     - name: Build plugin
       shell: bash

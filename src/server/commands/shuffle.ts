@@ -29,7 +29,7 @@ const registerShuffleCommand = (context: LavaPluginContext) => {
     name: 'shuffle',
     description: 'Shuffle queue.',
     args: [],
-    executes: async (invoker, args) => await execute(context, invoker, args)
+    execute: async (invoker, args) => await execute(context, invoker, args)
   });
 };
 

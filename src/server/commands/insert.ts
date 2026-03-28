@@ -48,7 +48,7 @@ const registerInsertCommand = (context: LavaPluginContext) => {
         required: true
       }
     ],
-    executes: async (invoker, args: TInsertCommandArgs) =>
+    execute: async (invoker, args: TInsertCommandArgs) =>
       await execute(context, invoker, args)
   });
 };
